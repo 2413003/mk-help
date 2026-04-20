@@ -41,6 +41,7 @@ body.auth-open {
 }
 
 button,
+input,
 textarea {
   font: inherit;
 }
@@ -48,6 +49,12 @@ textarea {
 button {
   color: inherit;
   cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+textarea:disabled {
+  cursor: not-allowed;
 }
 
 a {
@@ -310,6 +317,22 @@ a {
   font-size: 0.92rem;
 }
 
+.recent-item.active {
+  background: rgba(29, 31, 27, 0.08);
+}
+
+.recent-item:disabled {
+  opacity: 0.62;
+  cursor: default;
+}
+
+.recent-empty {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
 .sidebar-footer {
   display: grid;
   gap: 14px;
@@ -384,6 +407,15 @@ a {
   background: rgba(255, 255, 255, 0.95);
 }
 
+.ghost-button:disabled,
+.primary-button:disabled,
+.send-button:disabled,
+.composer-attach:disabled {
+  transform: none;
+  opacity: 0.58;
+  box-shadow: none;
+}
+
 .primary-button {
   background: var(--text);
   color: #f7f6f1;
@@ -442,6 +474,7 @@ a {
   align-items: center;
   gap: 10px;
   min-height: 46px;
+  border: 0;
   padding: 0 16px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.78);
@@ -514,6 +547,43 @@ a {
   flex-direction: column;
 }
 
+.scheduler-shell,
+.settings-shell {
+  display: none;
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  animation: fade-up 360ms ease;
+}
+
+.workspace-canvas.is-scheduler,
+.workspace-canvas.is-settings {
+  justify-content: flex-start;
+  gap: 18px;
+  padding-top: 22px;
+  padding-bottom: 28px;
+}
+
+.workspace-canvas.is-scheduler .scheduler-shell {
+  display: grid;
+  gap: 24px;
+}
+
+.workspace-canvas.is-settings .settings-shell {
+  display: grid;
+  gap: 24px;
+}
+
+.workspace-canvas.is-scheduler .home-stage,
+.workspace-canvas.is-scheduler .thread-shell,
+.workspace-canvas.is-settings .home-stage,
+.workspace-canvas.is-settings .thread-shell,
+.workspace-canvas.is-scheduler .composer,
+.workspace-canvas.is-settings .composer,
+.workspace-canvas.is-scheduler .service-strip,
+.workspace-canvas.is-settings .service-strip {
+  display: none;
+}
+
 .thread-head {
   display: flex;
   align-items: end;
@@ -533,6 +603,434 @@ a {
   display: grid;
   gap: 26px;
   padding-bottom: 24px;
+}
+
+.scheduler-head,
+.settings-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.scheduler-head h2,
+.settings-head h2 {
+  margin: 4px 0 0;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 0.96;
+  letter-spacing: -0.05em;
+}
+
+.scheduler-subtitle,
+.settings-subtitle {
+  margin: 12px 0 0;
+  max-width: 40ch;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.scheduler-head-actions {
+  display: grid;
+  justify-items: end;
+  gap: 12px;
+}
+
+.scheduler-switch {
+  display: inline-flex;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(29, 31, 27, 0.08);
+}
+
+.scheduler-tab {
+  min-height: 38px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 16px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.scheduler-tab.active {
+  background: rgba(29, 31, 27, 0.08);
+  color: var(--text);
+}
+
+.scheduler-layout,
+.settings-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+}
+
+.scheduler-main,
+.settings-main {
+  display: grid;
+  gap: 18px;
+}
+
+.scheduler-section,
+.settings-section,
+.scheduler-summary {
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow:
+    inset 0 0 0 1px rgba(29, 31, 27, 0.08),
+    var(--shadow);
+  backdrop-filter: blur(20px);
+}
+
+.scheduler-section,
+.settings-section {
+  padding: 24px;
+}
+
+.scheduler-summary {
+  position: sticky;
+  top: 18px;
+  align-self: start;
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+}
+
+.scheduler-section-head,
+.settings-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+
+.scheduler-section-head h3,
+.settings-section-head h3,
+.scheduler-summary-top h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  line-height: 1.1;
+}
+
+.scheduler-section-head p,
+.settings-section-head p,
+.scheduler-summary-top p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.option-grid,
+.time-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.day-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.option-button,
+.day-button {
+  border: 0;
+  border-radius: 18px;
+  background: rgba(29, 31, 27, 0.05);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px rgba(29, 31, 27, 0.06);
+  transition:
+    transform 180ms ease,
+    background 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.option-button {
+  min-height: 46px;
+  padding: 0 16px;
+  font-weight: 600;
+}
+
+.day-button {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  min-height: 82px;
+  padding: 14px;
+  text-align: left;
+}
+
+.day-button-weekday {
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.day-button-date {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.option-button:hover,
+.day-button:hover {
+  transform: translateY(-1px);
+}
+
+.option-button.active,
+.day-button.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px rgba(41, 87, 77, 0.18);
+}
+
+.plan-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(41, 87, 77, 0.1);
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.summary-list,
+.invoice-list,
+.request-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.summary-item,
+.invoice-item,
+.request-item,
+.usage-item,
+.plan-card,
+.settings-account-row {
+  border-radius: 20px;
+  background: rgba(29, 31, 27, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(29, 31, 27, 0.06);
+}
+
+.summary-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+}
+
+.summary-key {
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.summary-value {
+  text-align: right;
+  font-weight: 600;
+}
+
+.scheduler-summary-foot {
+  display: grid;
+  gap: 12px;
+}
+
+.scheduler-plan-copy,
+.scheduler-status,
+.settings-status,
+.empty-state {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+
+.scheduler-status.is-error,
+.settings-status.is-error {
+  color: #8e2e2e;
+}
+
+.current-plan {
+  display: grid;
+  gap: 16px;
+}
+
+.current-plan-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  background: rgba(41, 87, 77, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(41, 87, 77, 0.14);
+}
+
+.current-plan-main h4,
+.plan-card h4,
+.request-item h4,
+.invoice-item h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.current-plan-main p,
+.plan-card p,
+.request-item p,
+.invoice-item p,
+.settings-account-row p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.current-plan-price {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.usage-grid,
+.plan-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.usage-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+.usage-item {
+  padding: 16px;
+}
+
+.usage-label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.usage-value {
+  margin-top: 8px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.usage-foot {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.plan-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.plan-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.plan-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.plan-card-price {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.plan-card ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan-card li {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.plan-card.is-current {
+  background: rgba(41, 87, 77, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(41, 87, 77, 0.14);
+}
+
+.billing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.invoice-item,
+.request-item,
+.settings-account-row {
+  padding: 16px 18px;
+}
+
+.request-item-top,
+.invoice-item-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.request-item-meta,
+.invoice-item-meta {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.settings-side {
+  display: grid;
+  align-content: start;
+}
+
+.settings-section.compact {
+  position: sticky;
+  top: 18px;
+}
+
+.settings-account {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-account-label {
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.settings-account-value {
+  margin-top: 6px;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .message {
@@ -574,6 +1072,75 @@ a {
 .message[data-role="helper"] .message-body {
   padding-left: 0;
   padding-right: 0;
+}
+
+.message-text {
+  white-space: pre-wrap;
+}
+
+.message-files {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.message-file {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-width: min(100%, 320px);
+  border-radius: 18px;
+  background: rgba(29, 31, 27, 0.05);
+  padding: 10px;
+}
+
+.message[data-role="user"] .message-file {
+  background: rgba(29, 31, 27, 0.06);
+}
+
+.message-file-thumb {
+  display: inline-flex;
+  height: 52px;
+  width: 52px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: inset 0 0 0 1px rgba(29, 31, 27, 0.06);
+}
+
+.message-file-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.message-file-glyph {
+  color: var(--muted);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.message-file-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.message-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.message-file-meta {
+  color: var(--muted);
+  font-size: 0.76rem;
 }
 
 .message-actions {
@@ -699,6 +1266,10 @@ a {
   gap: 12px;
 }
 
+.composer-attach-wrap {
+  position: relative;
+}
+
 .composer-attach {
   display: inline-flex;
   height: 44px;
@@ -711,6 +1282,49 @@ a {
   color: var(--muted);
   font-size: 1.5rem;
   line-height: 1;
+}
+
+.attach-tooltip {
+  position: absolute;
+  left: -4px;
+  bottom: calc(100% + 12px);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  border-radius: 12px;
+  background: #111310;
+  color: #fff;
+  padding: 0 10px 0 12px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 12px 28px rgba(17, 19, 16, 0.22);
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.composer-attach-wrap:hover .attach-tooltip,
+.composer-attach-wrap:focus-within .attach-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.attach-tooltip-key {
+  display: inline-flex;
+  height: 22px;
+  min-width: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #f3f2ef;
+  padding: 0 7px;
+  font-size: 0.82rem;
 }
 
 .composer-input {
@@ -739,6 +1353,77 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+}
+
+.composer-status {
+  grid-column: 2;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.composer-status.is-error {
+  color: #8e2e2e;
+}
+
+.attachment-strip {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.attachment-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  max-width: min(100%, 280px);
+  border-radius: 999px;
+  background: rgba(29, 31, 27, 0.06);
+  padding: 0 10px 0 12px;
+  box-shadow: inset 0 0 0 1px rgba(29, 31, 27, 0.05);
+}
+
+.attachment-pill-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.attachment-pill-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.attachment-pill-meta {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.attachment-pill-remove {
+  display: inline-flex;
+  height: 24px;
+  width: 24px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(29, 31, 27, 0.08);
+  color: var(--muted);
+  flex: 0 0 auto;
+  font-size: 0;
+}
+
+.attachment-pill-remove::before {
+  content: "x";
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .mode-pills {
@@ -941,8 +1626,19 @@ body.sidebar-collapsed .workspace {
   background: rgba(29, 31, 27, 0.05);
   padding: 0 15px;
   color: var(--text);
+  font-family: "Sora", system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
   outline: none;
   box-shadow: inset 0 0 0 1px rgba(29, 31, 27, 0.06);
+}
+
+.auth-field input::placeholder,
+.composer textarea::placeholder {
+  font-family: "Sora", system-ui, sans-serif;
+  font-size: inherit;
+  font-weight: 400;
+  letter-spacing: inherit;
 }
 
 .auth-field input:focus {
@@ -1012,6 +1708,20 @@ body.sidebar-collapsed .workspace {
   .topbar-actions .ghost-button {
     display: none;
   }
+
+  .scheduler-layout,
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .scheduler-summary,
+  .settings-section.compact {
+    position: static;
+  }
+
+  .plan-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (min-width: 1081px) {
@@ -1055,6 +1765,22 @@ body.sidebar-collapsed .workspace {
     padding-bottom: 18px;
   }
 
+  .scheduler-head,
+  .settings-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .scheduler-head-actions {
+    justify-items: start;
+  }
+
+  .day-grid,
+  .usage-grid {
+    grid-template-columns: 1fr;
+  }
+
   .composer {
     grid-template-columns: 1fr;
     gap: 12px;
@@ -1070,6 +1796,10 @@ body.sidebar-collapsed .workspace {
     grid-column: 1;
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .attachment-strip {
+    grid-column: 1;
   }
 
   .mode-pills {
@@ -1091,6 +1821,21 @@ body.sidebar-collapsed .workspace {
 
   .service-link {
     min-width: 168px;
+  }
+
+  .scheduler-section,
+  .settings-section,
+  .scheduler-summary {
+    padding: 18px;
+    border-radius: 24px;
+  }
+
+  .scheduler-tab {
+    flex: 1 1 0;
+  }
+
+  .scheduler-switch {
+    width: 100%;
   }
 
   .topbar-actions {

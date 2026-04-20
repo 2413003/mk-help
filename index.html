@@ -19,7 +19,7 @@
       href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=12" />
+    <link rel="stylesheet" href="./styles.css?v=20" />
   </head>
   <body>
     <div class="app-shell">
@@ -33,10 +33,6 @@
                     src="https://cdn.shopify.com/s/files/1/1017/6456/3275/files/logo_1.png?v=1776685058"
                     alt=""
                   />
-                </span>
-                <span class="brand-copy">
-                  <strong>mk help</strong>
-                  <span>human help</span>
                 </span>
               </a>
               <button
@@ -123,12 +119,32 @@
                 </svg>
                 <span>Meetups</span>
               </button>
+              <button class="nav-item" id="settingsAction" type="button">
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <circle
+                    cx="10"
+                    cy="10"
+                    r="2.3"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  />
+                  <path
+                    d="M10 3.6v1.5M10 14.9v1.5M15.4 10h1.5M3.1 10h1.5M14.7 5.3l1 1M4.3 14.7l1 1M14.7 14.7l1-1M4.3 5.3l1 1"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-width="1.5"
+                  />
+                </svg>
+                <span>Settings</span>
+              </button>
             </nav>
           </div>
 
           <div class="recent-wrap">
             <p class="label">Recent</p>
-            <div class="recent-list">
+            <div class="recent-list" id="recentList">
               <button class="recent-item" data-seed="I need help with a housing form.">
                 Housing form
               </button>
@@ -199,10 +215,10 @@
           </div>
           <div class="topbar-actions">
             <button class="ghost-button" id="topLoginAction" type="button">Log in</button>
-            <div class="account-pill" id="topAccountPill" hidden>
+            <button class="account-pill" id="topAccountPill" type="button" hidden>
               <span class="account-pill-dot"></span>
               <span id="topAccountName">Member</span>
-            </div>
+            </button>
           </div>
         </header>
 
@@ -225,6 +241,193 @@
             <div class="conversation" id="conversation"></div>
           </div>
 
+          <section class="scheduler-shell" id="schedulerShell" aria-live="polite">
+            <div class="scheduler-head">
+              <div>
+                <p class="label" id="schedulerLabel">Call</p>
+                <h2 id="schedulerTitle">Pick a slot</h2>
+                <p class="scheduler-subtitle" id="schedulerSubtitle">
+                  Choose from set options. No back and forth.
+                </p>
+              </div>
+
+              <div class="scheduler-head-actions">
+                <span class="plan-pill" id="schedulerPlanBadge">Free</span>
+                <div class="scheduler-switch" role="tablist" aria-label="Scheduler mode">
+                  <button
+                    class="scheduler-tab active"
+                    data-scheduler-mode="call"
+                    type="button"
+                  >
+                    Call
+                  </button>
+                  <button class="scheduler-tab" data-scheduler-mode="meet" type="button">
+                    Meet
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="scheduler-layout">
+              <div class="scheduler-main">
+                <section class="scheduler-section">
+                  <div class="scheduler-section-head">
+                    <div>
+                      <h3>Topic</h3>
+                      <p>Pick the kind of help.</p>
+                    </div>
+                  </div>
+                  <div class="option-grid" id="schedulerTopicOptions"></div>
+                </section>
+
+                <section class="scheduler-section">
+                  <div class="scheduler-section-head">
+                    <div>
+                      <h3>Length</h3>
+                      <p>Set the time block.</p>
+                    </div>
+                  </div>
+                  <div class="option-grid" id="schedulerDurationOptions"></div>
+                </section>
+
+                <section class="scheduler-section">
+                  <div class="scheduler-section-head">
+                    <div>
+                      <h3>Day</h3>
+                      <p>Next available dates.</p>
+                    </div>
+                  </div>
+                  <div class="day-grid" id="schedulerDayOptions"></div>
+                </section>
+
+                <section class="scheduler-section">
+                  <div class="scheduler-section-head">
+                    <div>
+                      <h3>Time</h3>
+                      <p>Choose a fixed slot.</p>
+                    </div>
+                  </div>
+                  <div class="time-grid" id="schedulerTimeOptions"></div>
+                </section>
+
+                <section class="scheduler-section">
+                  <div class="scheduler-section-head">
+                    <div>
+                      <h3 id="schedulerFormatTitle">Call type</h3>
+                      <p id="schedulerFormatHint">Choose how it happens.</p>
+                    </div>
+                  </div>
+                  <div class="option-grid" id="schedulerFormatOptions"></div>
+                </section>
+              </div>
+
+              <aside class="scheduler-summary">
+                <div class="scheduler-summary-top">
+                  <p class="label">Summary</p>
+                  <h3 id="schedulerSummaryTitle">Call request</h3>
+                  <p id="schedulerSummaryIntro">Free plan includes this.</p>
+                </div>
+
+                <ul class="summary-list" id="schedulerSummary"></ul>
+
+                <div class="scheduler-summary-foot">
+                  <p class="scheduler-plan-copy" id="schedulerPlanCopy">
+                    Free includes chat, calls, and meetups. Launch limits still being tuned.
+                  </p>
+                  <button class="primary-button full-width" id="schedulerSubmit" type="button">
+                    Request call
+                  </button>
+                  <p class="scheduler-status" id="schedulerStatus" hidden></p>
+                </div>
+              </aside>
+            </div>
+          </section>
+
+          <section class="settings-shell" id="settingsShell">
+            <div class="settings-head">
+              <div>
+                <p class="label">Settings</p>
+                <h2>Plan & billing</h2>
+                <p class="settings-subtitle">
+                  Current plan, usage, requests, and billing in one place.
+                </p>
+              </div>
+            </div>
+
+            <div class="settings-layout">
+              <div class="settings-main">
+                <section class="settings-section">
+                  <div class="settings-section-head">
+                    <div>
+                      <h3>Current plan</h3>
+                      <p>Free by default. Paid tiers unlock higher limits.</p>
+                    </div>
+                    <span class="plan-pill" id="currentPlanPill">Free</span>
+                  </div>
+
+                  <div class="current-plan" id="currentPlanCard"></div>
+                  <div class="usage-grid" id="usageGrid"></div>
+                </section>
+
+                <section class="settings-section">
+                  <div class="settings-section-head">
+                    <div>
+                      <h3>Plans</h3>
+                      <p>Like ChatGPT or Claude, but for human help.</p>
+                    </div>
+                  </div>
+
+                  <div class="plan-grid" id="planGrid"></div>
+                </section>
+
+                <section class="settings-section">
+                  <div class="settings-section-head">
+                    <div>
+                      <h3>Billing</h3>
+                      <p>Manage billing, payment methods, and invoices here.</p>
+                    </div>
+                  </div>
+
+                  <div class="billing-actions">
+                    <button class="ghost-button" id="manageBillingAction" type="button">
+                      Manage billing
+                    </button>
+                    <button class="ghost-button" id="managePaymentAction" type="button">
+                      Payment methods
+                    </button>
+                  </div>
+
+                  <div class="invoice-list" id="invoiceList"></div>
+                  <p class="settings-status" id="billingStatus" hidden></p>
+                </section>
+
+                <section class="settings-section">
+                  <div class="settings-section-head">
+                    <div>
+                      <h3>Requests</h3>
+                      <p>Your latest call and meetup requests.</p>
+                    </div>
+                  </div>
+
+                  <div class="request-list" id="requestList"></div>
+                </section>
+              </div>
+
+              <aside class="settings-side">
+                <section class="settings-section compact">
+                  <div class="settings-section-head">
+                    <div>
+                      <h3>Account</h3>
+                      <p id="settingsAccountHint">Log in to manage your plan.</p>
+                    </div>
+                  </div>
+
+                  <div class="settings-account" id="settingsAccountCard"></div>
+                </section>
+              </aside>
+            </div>
+          </section>
+
           <div class="service-strip" aria-label="Ways to get help">
             <button class="service-link active" data-mode="chat" type="button">
               <span>Chat</span>
@@ -241,7 +444,22 @@
           </div>
 
           <form class="composer" id="composer">
-            <button class="composer-attach" type="button" aria-label="More options">+</button>
+            <div class="composer-attach-wrap">
+              <button
+                class="composer-attach"
+                id="composerAttach"
+                type="button"
+                aria-label="Add files and more"
+                aria-describedby="attachTooltip"
+              >
+                +
+              </button>
+              <div class="attach-tooltip" id="attachTooltip" role="tooltip">
+                <span>Add files and more</span>
+                <span class="attach-tooltip-key">/</span>
+              </div>
+              <input class="sr-only" id="composerFileInput" type="file" multiple />
+            </div>
 
             <label class="composer-input">
               <span class="sr-only">Ask for help</span>
@@ -252,6 +470,8 @@
                 autocomplete="off"
               ></textarea>
             </label>
+
+            <div class="attachment-strip" id="attachmentStrip" hidden></div>
 
             <div class="composer-controls">
               <div class="mode-pills" role="tablist" aria-label="Help mode">
@@ -272,6 +492,8 @@
                 </svg>
               </button>
             </div>
+
+            <p class="composer-status" id="composerStatus" hidden></p>
           </form>
         </section>
       </main>
@@ -356,6 +578,8 @@
       </section>
     </div>
 
-    <script src="./script.js?v=11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./config.js?v=3"></script>
+    <script src="./script.js?v=20"></script>
   </body>
 </html>
