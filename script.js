@@ -310,6 +310,16 @@ function updateHomeGreeting() {
   homeGreeting.textContent = currentUser ? `${greeting}, ${getCurrentFirstName()}` : greeting;
 }
 
+function focusComposerInput() {
+  if (authOverlay && !authOverlay.hidden) {
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    messageInput.focus({ preventScroll: true });
+  });
+}
+
 function getDefaultSubscription() {
   return {
     plan_code: "free",
@@ -709,7 +719,7 @@ function resetChat() {
   messageInput.value = "";
   autoResizeTextarea();
   renderRecentList();
-  messageInput.focus();
+  focusComposerInput();
 }
 
 function queueDraft(message, mode, attachments = []) {
@@ -1479,7 +1489,7 @@ async function openConversation(conversationId, options = {}) {
     setSidebar(false);
   }
 
-  messageInput.focus();
+  focusComposerInput();
 }
 
 async function updateConversationMode(conversationId, mode) {
@@ -1771,6 +1781,7 @@ async function applyAuthSession(nextSession) {
   } else {
     showHome();
     renderRecentList();
+    focusComposerInput();
   }
 
   await consumeDraft();
@@ -2096,6 +2107,7 @@ async function bootstrap() {
   renderScheduler();
   renderSettings();
   showHome();
+  focusComposerInput();
 
   if (!hasBackend || !supabaseClient) {
     updateAuthUI();
