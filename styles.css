@@ -529,9 +529,9 @@ a {
 .home-stage h1 {
   margin: 0;
   max-width: 14ch;
-  font-size: clamp(2.35rem, 4.9vw, 3.95rem);
-  font-weight: 600;
-  line-height: 1.04;
+  font-size: clamp(2.1rem, 4.35vw, 3.45rem);
+  font-weight: 500;
+  line-height: 1.06;
   letter-spacing: -0.045em;
 }
 
@@ -1468,6 +1468,21 @@ a {
   background: var(--text);
   color: #f7f6f1;
   box-shadow: 0 12px 28px rgba(29, 31, 27, 0.18);
+  opacity: 0;
+  transform: scale(0.9);
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 180ms ease,
+    background 180ms ease;
+  will-change: opacity, transform;
+}
+
+.send-button.is-visible {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
 }
 
 .send-button svg {
@@ -1475,8 +1490,23 @@ a {
   height: 18px;
 }
 
-.send-button:hover {
-  transform: translateY(-1px);
+.send-button.is-visible:hover {
+  transform: translateY(-1px) scale(1);
+}
+
+.send-button:not(.is-visible),
+.send-button:not(.is-visible):disabled {
+  opacity: 0;
+  transform: scale(0.9);
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.send-button.is-visible:disabled {
+  opacity: 0.58;
+  transform: scale(1);
+  box-shadow: none;
+  pointer-events: none;
 }
 
 .workspace-canvas.is-chat .composer {
@@ -1770,7 +1800,7 @@ body.sidebar-collapsed .workspace {
   }
 
   .home-stage h1 {
-    font-size: clamp(2rem, 9vw, 3rem);
+    font-size: clamp(1.8rem, 8vw, 2.65rem);
   }
 
   .thread-head {

@@ -10,6 +10,7 @@ const composerFileInput = document.getElementById("composerFileInput");
 const messageInput = document.getElementById("messageInput");
 const attachmentStrip = document.getElementById("attachmentStrip");
 const composerStatus = document.getElementById("composerStatus");
+const sendButton = composer.querySelector(".send-button");
 const conversation = document.getElementById("conversation");
 const threadTitle = document.getElementById("threadTitle");
 const recentList = document.getElementById("recentList");
@@ -392,6 +393,14 @@ function setMode(mode) {
 function autoResizeTextarea() {
   messageInput.style.height = "auto";
   messageInput.style.height = `${Math.min(messageInput.scrollHeight, 180)}px`;
+  updateComposerSubmitState();
+}
+
+function updateComposerSubmitState() {
+  const hasMessage = Boolean(messageInput.value.trim());
+  sendButton.classList.toggle("is-visible", hasMessage);
+  sendButton.disabled = isSubmittingMessage || !hasMessage;
+  sendButton.setAttribute("aria-hidden", String(!hasMessage));
 }
 
 function formatFileSize(size) {
@@ -488,7 +497,7 @@ function setComposerBusy(isBusy) {
   isSubmittingMessage = isBusy;
   composerAttach.disabled = isBusy;
   messageInput.disabled = isBusy;
-  composer.querySelector(".send-button").disabled = isBusy;
+  updateComposerSubmitState();
 }
 
 function setSchedulerStatus(message = "", tone = "") {
