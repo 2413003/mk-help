@@ -78,7 +78,6 @@ const STORAGE_KEYS = {
 };
 
 const SIDEBAR_BREAKPOINT = 1080;
-const demoRecentMarkup = recentList.innerHTML;
 
 const helpers = {
   chat: {
@@ -172,8 +171,15 @@ const scheduleDefinitions = {
 const appConfig = window.MK_HELP_CONFIG || {};
 const SUPABASE_URL = (appConfig.supabaseUrl || "").trim();
 const SUPABASE_ANON_KEY = (appConfig.supabaseAnonKey || "").trim();
-const MESSAGE_FILES_BUCKET = (appConfig.messageFilesBucket || "message-files").trim();
+const MESSAGE_FILES_BUCKET = (appConfig.messageFilesBucket || "mk-help-message-files").trim();
 const BILLING_PORTAL_URL = (appConfig.billingPortalUrl || "").trim();
+const DB = {
+  profiles: "mk_help_profiles",
+  subscriptions: "mk_help_subscriptions",
+  conversations: "mk_help_conversations",
+  messages: "mk_help_messages",
+  bookingRequests: "mk_help_booking_requests",
+};
 
 function hasRealConfigValue(value) {
   return Boolean(value) && !/^YOUR_/i.test(value);
@@ -579,11 +585,6 @@ function updateAuthUI() {
 }
 
 function renderRecentList() {
-  if (!currentUser) {
-    recentList.innerHTML = demoRecentMarkup;
-    return;
-  }
-
   recentList.innerHTML = "";
 
   if (conversations.length === 0) {
@@ -1199,7 +1200,7 @@ async function loadProfile() {
   }
 
   const { data, error } = await supabaseClient
-    .from("profiles")
+    .from(DB.profiles)
     .select("id, email, full_name, first_name, role")
     .eq("id", currentUser.id)
     .maybeSingle();
@@ -1221,7 +1222,7 @@ async function loadSubscription() {
   }
 
   const { data, error } = await supabaseClient
-    .from("subscriptions")
+    .from(DB.subscriptions)
     .select("user_id, plan_code, status, billing_email, current_period_end, cancel_at_period_end")
     .eq("user_id", currentUser.id)
     .maybeSingle();
@@ -1244,7 +1245,7 @@ async function loadSubscription() {
   };
 
   const { data: inserted, error: insertError } = await supabaseClient
-    .from("subscriptions")
+    .from(DB.subscriptions)
     .upsert(defaultRow)
     .select("user_id, plan_code, status, billing_email, current_period_end, cancel_at_period_end")
     .maybeSingle();
@@ -1266,7 +1267,7 @@ async function loadBookingRequests() {
   }
 
   const { data, error } = await supabaseClient
-    .from("booking_requests")
+    .from(DB.bookingRequests)
     .select(
       "id, kind, topic, duration_minutes, slot_date, slot_time, contact_channel, area, status, created_at",
     )
@@ -1292,7 +1293,7 @@ async function loadConversations() {
   }
 
   const { data, error } = await supabaseClient
-    .from("conversations")
+    .from(DB.conversations)
     .select("id, title, mode, last_message_preview, updated_at, created_at")
     .eq("user_id", currentUser.id)
     .order("updated_at", { ascending: false });
@@ -1373,7 +1374,7 @@ async function loadMessages(conversationId) {
   }
 
   const { data, error } = await supabaseClient
-    .from("messages")
+    .from(DB.messages)
     .select("id, role, body, attachments, sender_name, created_at")
     .eq("conversation_id", conversationId)
     .order("created_at", { ascending: true });
@@ -1416,7 +1417,7 @@ function subscribeToConversations() {
       {
         event: "*",
         schema: "public",
-        table: "conversations",
+        table: DB.conversations,
         filter: `user_id=eq.${currentUser.id}`,
       },
       () => {
@@ -1440,7 +1441,7 @@ function subscribeToMessages(conversationId) {
       {
         event: "*",
         schema: "public",
-        table: "messages",
+        table: DB.messages,
         filter: `conversation_id=eq.${conversationId}`,
       },
       () => {
@@ -1487,7 +1488,7 @@ async function updateConversationMode(conversationId, mode) {
   }
 
   const { error } = await supabaseClient
-    .from("conversations")
+    .from(DB.conversations)
     .update({ mode })
     .eq("id", conversationId);
 
@@ -1516,7 +1517,7 @@ async function createConversation(message, mode) {
   };
 
   const { data, error } = await supabaseClient
-    .from("conversations")
+    .from(DB.conversations)
     .insert(payload)
     .select("id, title, mode, last_message_preview, updated_at, created_at")
     .single();
@@ -1622,7 +1623,7 @@ async function submitMessage(rawMessage, skipAuth = false, attachmentsOverride =
 
     const uploadedAttachments = await uploadAttachments(attachments, conversationRecord.id);
 
-    const { error } = await supabaseClient.from("messages").insert({
+    const { error } = await supabaseClient.from(DB.messages).insert({
       attachments: uploadedAttachments,
       body: message,
       conversation_id: conversationRecord.id,
@@ -1644,7 +1645,7 @@ async function submitMessage(rawMessage, skipAuth = false, attachmentsOverride =
     console.error(error);
 
     if (createdConversationId && supabaseClient) {
-      await supabaseClient.from("conversations").delete().eq("id", createdConversationId);
+      await supabaseClient.from(DB.conversations).delete().eq("id", createdConversationId);
       conversations = conversations.filter((item) => item.id !== createdConversationId);
       activeConversationId = null;
       conversation.innerHTML = "";
@@ -1698,7 +1699,7 @@ async function submitSchedulerRequest(skipAuth = false) {
     };
 
     const { data, error } = await supabaseClient
-      .from("booking_requests")
+      .from(DB.bookingRequests)
       .insert(payload)
       .select(
         "id, kind, topic, duration_minutes, slot_date, slot_time, contact_channel, area, status, created_at",
