@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=6" />
   </head>
   <body>
     <div class="app-shell">
@@ -132,7 +132,18 @@
               <span class="presence-dot"></span>
               <span>People online</span>
             </div>
-            <button class="ghost-button full-width" type="button">Log in</button>
+            <button class="ghost-button full-width" id="sidebarLoginAction" type="button">
+              Log in
+            </button>
+            <div class="session-card" id="sidebarSessionCard" hidden>
+              <div class="session-copy">
+                <strong id="sidebarSessionName">mk help</strong>
+                <span id="sidebarSessionEmail">hello@mkhelp.co.uk</span>
+              </div>
+              <button class="ghost-button full-width" id="sidebarLogoutAction" type="button">
+                Log out
+              </button>
+            </div>
           </div>
         </div>
       </aside>
@@ -148,7 +159,11 @@
             </button>
           </div>
           <div class="topbar-actions">
-            <button class="ghost-button" type="button">Log in</button>
+            <button class="ghost-button" id="topLoginAction" type="button">Log in</button>
+            <div class="account-pill" id="topAccountPill" hidden>
+              <span class="account-pill-dot"></span>
+              <span id="topAccountName">Member</span>
+            </div>
             <button class="primary-button" id="startAction" type="button">Start</button>
           </div>
         </header>
@@ -224,6 +239,77 @@
       </main>
     </div>
 
-    <script src="./script.js"></script>
+    <div class="auth-overlay" id="authOverlay" hidden>
+      <button class="auth-backdrop" id="authBackdrop" type="button" aria-label="Close auth"></button>
+      <section class="auth-panel" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+        <div class="auth-head">
+          <div class="auth-brand">
+            <strong>mk help</strong>
+            <span>Private to this browser.</span>
+          </div>
+          <button class="icon-button" id="closeAuth" type="button" aria-label="Close auth">
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+
+        <div class="auth-tabs" role="tablist" aria-label="Authentication">
+          <button class="auth-tab active" id="loginTab" data-auth-mode="login" type="button">
+            Log in
+          </button>
+          <button class="auth-tab" id="signupTab" data-auth-mode="signup" type="button">
+            Sign up
+          </button>
+        </div>
+
+        <div class="auth-copy">
+          <h2 id="authTitle">Log in</h2>
+          <p id="authHint">Use the same browser next time.</p>
+        </div>
+
+        <form class="auth-form" id="authForm">
+          <label class="auth-field" id="authNameField" hidden>
+            <span>Name</span>
+            <input
+              id="authName"
+              name="name"
+              type="text"
+              autocomplete="name"
+              placeholder="Your name"
+            />
+          </label>
+
+          <label class="auth-field">
+            <span>Email</span>
+            <input
+              id="authEmail"
+              name="email"
+              type="email"
+              autocomplete="email"
+              placeholder="you@example.com"
+              required
+            />
+          </label>
+
+          <label class="auth-field">
+            <span>Password</span>
+            <input
+              id="authPassword"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              placeholder="Password"
+              required
+            />
+          </label>
+
+          <p class="auth-error" id="authError" hidden></p>
+
+          <button class="primary-button full-width" id="authSubmit" type="submit">Log in</button>
+        </form>
+      </section>
+    </div>
+
+    <script src="./script.js?v=6"></script>
   </body>
 </html>

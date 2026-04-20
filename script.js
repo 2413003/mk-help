@@ -1,6 +1,5 @@
 const body = document.body;
 const workspaceCanvas = document.getElementById("workspaceCanvas");
-const sidebar = document.getElementById("sidebar");
 const openSidebarButton = document.getElementById("openSidebar");
 const closeSidebarButton = document.getElementById("closeSidebar");
 const sidebarBackdrop = document.getElementById("sidebarBackdrop");
@@ -12,10 +11,39 @@ const newChatButton = document.getElementById("newChat");
 const searchAction = document.getElementById("searchAction");
 const brandHome = document.getElementById("brandHome");
 const startAction = document.getElementById("startAction");
+const topLoginAction = document.getElementById("topLoginAction");
+const topAccountPill = document.getElementById("topAccountPill");
+const topAccountName = document.getElementById("topAccountName");
+const sidebarLoginAction = document.getElementById("sidebarLoginAction");
+const sidebarSessionCard = document.getElementById("sidebarSessionCard");
+const sidebarSessionName = document.getElementById("sidebarSessionName");
+const sidebarSessionEmail = document.getElementById("sidebarSessionEmail");
+const sidebarLogoutAction = document.getElementById("sidebarLogoutAction");
 const modePills = [...document.querySelectorAll(".mode-pill")];
 const serviceLinks = [...document.querySelectorAll(".service-link")];
 const shortcuts = [...document.querySelectorAll(".shortcut, .recent-item")];
 const quickModeButtons = [...document.querySelectorAll("[data-quick-mode]")];
+const authOverlay = document.getElementById("authOverlay");
+const authBackdrop = document.getElementById("authBackdrop");
+const closeAuthButton = document.getElementById("closeAuth");
+const authForm = document.getElementById("authForm");
+const authNameField = document.getElementById("authNameField");
+const authName = document.getElementById("authName");
+const authEmail = document.getElementById("authEmail");
+const authPassword = document.getElementById("authPassword");
+const authError = document.getElementById("authError");
+const authTitle = document.getElementById("authTitle");
+const authHint = document.getElementById("authHint");
+const authSubmit = document.getElementById("authSubmit");
+const authTabs = [...document.querySelectorAll(".auth-tab")];
+
+const STORAGE_KEYS = {
+  users: "mk-help-users",
+  session: "mk-help-session",
+  sidebarCollapsed: "mk-help-sidebar-collapsed",
+};
+
+const SIDEBAR_BREAKPOINT = 1080;
 
 const helpers = {
   chat: {
@@ -35,14 +63,100 @@ const helpers = {
 };
 
 let activeMode = "chat";
+let authMode = "login";
 let replyTimer = null;
+let pendingDraft = null;
+let session = loadSession();
+let isSidebarCollapsed = readStorage(STORAGE_KEYS.sidebarCollapsed, false);
+
 const quickModeSeeds = {
   call: "I would like a call.",
   meet: "I would like to meet in Milton Keynes.",
 };
 
+function readStorage(key, fallback) {
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeStorage(key, value) {
+  window.localStorage.setItem(key, JSON.stringify(value));
+}
+
+function loadUsers() {
+  return readStorage(STORAGE_KEYS.users, []);
+}
+
+function saveUsers(users) {
+  writeStorage(STORAGE_KEYS.users, users);
+}
+
+function loadSession() {
+  return readStorage(STORAGE_KEYS.session, null);
+}
+
+function saveSession(nextSession) {
+  session = nextSession;
+  writeStorage(STORAGE_KEYS.session, nextSession);
+}
+
+function clearSession() {
+  session = null;
+  window.localStorage.removeItem(STORAGE_KEYS.session);
+}
+
+function normalizeEmail(value) {
+  return value.trim().toLowerCase();
+}
+
+function getDisplayName(user) {
+  if (!user) {
+    return "Member";
+  }
+
+  const name = user.name?.trim();
+  if (name) {
+    return name;
+  }
+
+  return user.email.split("@")[0];
+}
+
 function setSidebar(open) {
   body.classList.toggle("sidebar-open", open);
+}
+
+function persistSidebarPreference() {
+  writeStorage(STORAGE_KEYS.sidebarCollapsed, isSidebarCollapsed);
+}
+
+function applySidebarPreference() {
+  if (window.innerWidth > SIDEBAR_BREAKPOINT) {
+    body.classList.toggle("sidebar-collapsed", isSidebarCollapsed);
+    body.classList.remove("sidebar-open");
+    return;
+  }
+
+  body.classList.remove("sidebar-collapsed");
+}
+
+function setDesktopSidebarCollapsed(collapsed) {
+  isSidebarCollapsed = collapsed;
+  persistSidebarPreference();
+  applySidebarPreference();
+}
+
+function toggleSidebar() {
+  if (window.innerWidth > SIDEBAR_BREAKPOINT) {
+    setDesktopSidebarCollapsed(!isSidebarCollapsed);
+    return;
+  }
+
+  setSidebar(!body.classList.contains("sidebar-open"));
 }
 
 function setMode(mode) {
@@ -60,6 +174,72 @@ function setMode(mode) {
 function autoResizeTextarea() {
   messageInput.style.height = "auto";
   messageInput.style.height = `${Math.min(messageInput.scrollHeight, 180)}px`;
+}
+
+function setAuthError(message = "") {
+  authError.textContent = message;
+  authError.hidden = !message;
+}
+
+function resetAuthForm() {
+  authForm.reset();
+  setAuthError();
+}
+
+function setAuthMode(mode, hintOverride = "") {
+  authMode = mode;
+
+  authTabs.forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.authMode === mode);
+  });
+
+  authNameField.hidden = mode !== "signup";
+  authName.required = mode === "signup";
+  authPassword.autocomplete = mode === "signup" ? "new-password" : "current-password";
+  authTitle.textContent = mode === "signup" ? "Sign up" : "Log in";
+  authSubmit.textContent = mode === "signup" ? "Create account" : "Log in";
+  authHint.textContent =
+    hintOverride ||
+    (mode === "signup" ? "Create a local account for this browser." : "Use the same browser next time.");
+  setAuthError();
+}
+
+function openAuth(mode = "login", hint = "") {
+  setAuthMode(mode, hint);
+  authOverlay.hidden = false;
+  body.classList.add("auth-open");
+
+  window.setTimeout(() => {
+    if (authMode === "signup") {
+      authName.focus();
+    } else {
+      authEmail.focus();
+    }
+  }, 0);
+}
+
+function closeAuth() {
+  authOverlay.hidden = true;
+  body.classList.remove("auth-open");
+  setAuthError();
+}
+
+function updateAuthUI() {
+  const isAuthed = Boolean(session);
+
+  topLoginAction.hidden = isAuthed;
+  topAccountPill.hidden = !isAuthed;
+  sidebarLoginAction.hidden = isAuthed;
+  sidebarSessionCard.hidden = !isAuthed;
+
+  if (!isAuthed) {
+    return;
+  }
+
+  const displayName = getDisplayName(session);
+  topAccountName.textContent = displayName;
+  sidebarSessionName.textContent = displayName;
+  sidebarSessionEmail.textContent = session.email;
 }
 
 function createMessage(role, label, text, actions = []) {
@@ -243,10 +423,47 @@ function resetChat() {
   messageInput.focus();
 }
 
-function submitMessage(rawMessage) {
+function queueDraft(message, mode) {
+  pendingDraft = {
+    message,
+    mode,
+  };
+}
+
+function consumeDraft() {
+  if (!pendingDraft) {
+    return;
+  }
+
+  const queued = { ...pendingDraft };
+  pendingDraft = null;
+  setMode(queued.mode);
+  submitMessage(queued.message, true);
+}
+
+function requireAuth(message = "", mode = activeMode, preferredMode = "login", hint = "") {
+  if (session) {
+    return true;
+  }
+
+  if (message) {
+    queueDraft(message, mode);
+    messageInput.value = message;
+    autoResizeTextarea();
+  }
+
+  openAuth(preferredMode, hint || "Log in or sign up to continue.");
+  return false;
+}
+
+function submitMessage(rawMessage, skipAuth = false) {
   const message = rawMessage.trim();
 
   if (!message) {
+    return;
+  }
+
+  if (!skipAuth && !requireAuth(message, activeMode, "signup", "Log in or sign up to send this.")) {
     return;
   }
 
@@ -265,9 +482,97 @@ function submitMessage(rawMessage) {
   }, 900);
 }
 
+async function hashPassword(password) {
+  if (!window.crypto?.subtle) {
+    return window.btoa(unescape(encodeURIComponent(password)));
+  }
+
+  const payload = new TextEncoder().encode(password);
+  const digest = await window.crypto.subtle.digest("SHA-256", payload);
+  return [...new Uint8Array(digest)].map((value) => value.toString(16).padStart(2, "0")).join("");
+}
+
+async function handleAuthSubmit(event) {
+  event.preventDefault();
+  setAuthError();
+
+  const email = normalizeEmail(authEmail.value);
+  const password = authPassword.value.trim();
+
+  if (!email || !password) {
+    setAuthError("Enter your email and password.");
+    return;
+  }
+
+  const users = loadUsers();
+  const passwordHash = await hashPassword(password);
+
+  if (authMode === "signup") {
+    const name = authName.value.trim();
+
+    if (name.length < 2) {
+      setAuthError("Enter your name.");
+      return;
+    }
+
+    if (users.some((user) => user.email === email)) {
+      setAuthError("That email already exists. Try logging in.");
+      return;
+    }
+
+    const user = {
+      name,
+      email,
+      passwordHash,
+      createdAt: new Date().toISOString(),
+    };
+
+    users.push(user);
+    saveUsers(users);
+    saveSession({ name: user.name, email: user.email });
+  } else {
+    const existingUser = users.find((user) => user.email === email);
+
+    if (!existingUser) {
+      setAuthError("No account found for that email.");
+      return;
+    }
+
+    if (existingUser.passwordHash !== passwordHash) {
+      setAuthError("Wrong password.");
+      return;
+    }
+
+    saveSession({ name: existingUser.name, email: existingUser.email });
+  }
+
+  updateAuthUI();
+  closeAuth();
+  resetAuthForm();
+  consumeDraft();
+
+  if (!pendingDraft) {
+    messageInput.focus();
+  }
+}
+
+function logout() {
+  clearSession();
+  updateAuthUI();
+  closeAuth();
+}
+
 composer.addEventListener("submit", (event) => {
   event.preventDefault();
   submitMessage(messageInput.value);
+});
+
+authForm.addEventListener("submit", handleAuthSubmit);
+
+authTabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    setAuthMode(tab.dataset.authMode);
+  });
 });
 
 messageInput.addEventListener("input", autoResizeTextarea);
@@ -306,11 +611,13 @@ shortcuts.forEach((button) => {
 quickModeButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const mode = button.dataset.quickMode;
+    const seed = quickModeSeeds[mode];
+
     window.clearTimeout(replyTimer);
     clearTyping();
     setMode(mode);
     conversation.innerHTML = "";
-    submitMessage(quickModeSeeds[mode]);
+    submitMessage(seed);
     setSidebar(false);
   });
 });
@@ -319,27 +626,63 @@ newChatButton.addEventListener("click", () => {
   resetChat();
   setSidebar(false);
 });
+
 searchAction.addEventListener("click", () => {
   setSidebar(false);
   messageInput.focus();
 });
+
 brandHome.addEventListener("click", (event) => {
   event.preventDefault();
   resetChat();
 });
+
 startAction.addEventListener("click", () => {
+  if (!requireAuth("", activeMode, "signup", "Sign up to start.")) {
+    return;
+  }
+
   messageInput.focus();
 });
 
-openSidebarButton.addEventListener("click", () => setSidebar(true));
-closeSidebarButton.addEventListener("click", () => setSidebar(false));
+topLoginAction.addEventListener("click", () => {
+  openAuth("login", "Use the same browser next time.");
+});
+
+sidebarLoginAction.addEventListener("click", () => {
+  openAuth("login", "Use the same browser next time.");
+});
+
+sidebarLogoutAction.addEventListener("click", logout);
+authBackdrop.addEventListener("click", closeAuth);
+closeAuthButton.addEventListener("click", closeAuth);
+topAccountPill.addEventListener("click", () => {
+  messageInput.focus();
+});
+
+openSidebarButton.addEventListener("click", toggleSidebar);
+closeSidebarButton.addEventListener("click", () => {
+  if (window.innerWidth > SIDEBAR_BREAKPOINT) {
+    setDesktopSidebarCollapsed(true);
+    return;
+  }
+
+  setSidebar(false);
+});
 sidebarBackdrop.addEventListener("click", () => setSidebar(false));
 
-window.addEventListener("resize", () => {
-  if (window.innerWidth > 1080) {
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    closeAuth();
     setSidebar(false);
   }
 });
 
+window.addEventListener("resize", () => {
+  applySidebarPreference();
+});
+
+updateAuthUI();
 autoResizeTextarea();
+applySidebarPreference();
 resetChat();
