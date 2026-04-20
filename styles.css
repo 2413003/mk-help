@@ -163,6 +163,12 @@ a {
   transform: translateY(-1px);
 }
 
+.icon-button svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
 .icon-button span {
   display: block;
   width: 16px;
@@ -177,6 +183,20 @@ a {
 
 .icon-button-mobile {
   display: none;
+}
+
+.icon-button-toggle {
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(29, 31, 27, 0.08);
+}
+
+.icon-button-toggle:hover {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.icon-button-close {
+  background: rgba(255, 255, 255, 0.56);
+  box-shadow: inset 0 0 0 1px rgba(29, 31, 27, 0.06);
 }
 
 .new-chat,
