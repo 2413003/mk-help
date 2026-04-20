@@ -11,7 +11,6 @@ const threadTitle = document.getElementById("threadTitle");
 const newChatButton = document.getElementById("newChat");
 const searchAction = document.getElementById("searchAction");
 const brandHome = document.getElementById("brandHome");
-const startAction = document.getElementById("startAction");
 const topLoginAction = document.getElementById("topLoginAction");
 const topAccountPill = document.getElementById("topAccountPill");
 const topAccountName = document.getElementById("topAccountName");
@@ -661,14 +660,6 @@ searchAction.addEventListener("click", () => {
 brandHome.addEventListener("click", (event) => {
   event.preventDefault();
   resetChat();
-});
-
-startAction.addEventListener("click", () => {
-  if (!requireAuth("", activeMode, "signup", "Sign up to start.")) {
-    return;
-  }
-
-  messageInput.focus();
 });
 
 topLoginAction.addEventListener("click", () => {

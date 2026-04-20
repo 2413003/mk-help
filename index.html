@@ -8,13 +8,18 @@
       name="description"
       content="mk help is human help by chat, call, and in-person meetups in Milton Keynes."
     />
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://cdn.shopify.com/s/files/1/1017/6456/3275/files/logo_1.png?v=1776685058"
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=10" />
+    <link rel="stylesheet" href="./styles.css?v=12" />
   </head>
   <body>
     <div class="app-shell">
@@ -23,7 +28,12 @@
           <div class="sidebar-top">
             <div class="sidebar-row">
               <a class="brand" href="#" id="brandHome" aria-label="mk help home">
-                <span class="brand-mark">mk</span>
+                <span class="brand-mark brand-mark-image">
+                  <img
+                    src="https://cdn.shopify.com/s/files/1/1017/6456/3275/files/logo_1.png?v=1776685058"
+                    alt=""
+                  />
+                </span>
                 <span class="brand-copy">
                   <strong>mk help</strong>
                   <span>human help</span>
@@ -193,7 +203,6 @@
               <span class="account-pill-dot"></span>
               <span id="topAccountName">Member</span>
             </div>
-            <button class="primary-button" id="startAction" type="button">Start</button>
           </div>
         </header>
 
@@ -273,7 +282,15 @@
       <section class="auth-panel" role="dialog" aria-modal="true" aria-labelledby="authTitle">
         <div class="auth-head">
           <div class="auth-brand">
-            <strong>mk help</strong>
+            <div class="auth-brand-row">
+              <span class="brand-mark brand-mark-image brand-mark-auth">
+                <img
+                  src="https://cdn.shopify.com/s/files/1/1017/6456/3275/files/logo_1.png?v=1776685058"
+                  alt=""
+                />
+              </span>
+              <strong>mk help</strong>
+            </div>
             <span>Private to this browser.</span>
           </div>
           <button class="icon-button" id="closeAuth" type="button" aria-label="Close auth">
@@ -339,6 +356,6 @@
       </section>
     </div>
 
-    <script src="./script.js?v=10"></script>
+    <script src="./script.js?v=11"></script>
   </body>
 </html>
