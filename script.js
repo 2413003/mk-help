@@ -211,7 +211,6 @@ function inferReply(message, mode) {
 }
 
 function setThread(mode, initialMessage = "") {
-  body.classList.add("has-thread");
   workspaceCanvas.classList.remove("is-home");
   workspaceCanvas.classList.add("is-chat");
   threadTitle.textContent = helpers[mode].title;
@@ -236,7 +235,6 @@ function resetChat() {
   window.clearTimeout(replyTimer);
   clearTyping();
   conversation.innerHTML = "";
-  body.classList.remove("has-thread");
   workspaceCanvas.classList.add("is-home");
   workspaceCanvas.classList.remove("is-chat");
   setMode("chat");

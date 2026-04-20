@@ -66,24 +66,16 @@ a {
   position: relative;
   display: grid;
   min-height: 100vh;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: 292px minmax(0, 1fr);
 }
 
 .sidebar {
-  display: none;
+  display: block;
   position: relative;
   z-index: 30;
   border-right: 1px solid var(--line);
   background: var(--sidebar);
   background: color-mix(in srgb, var(--sidebar) 92%, white 8%);
-}
-
-body.has-thread .app-shell {
-  grid-template-columns: 292px minmax(0, 1fr);
-}
-
-body.has-thread .sidebar {
-  display: block;
 }
 
 .sidebar-inner {
@@ -409,54 +401,22 @@ body.has-thread .sidebar {
   align-items: center;
   flex-direction: column;
   justify-content: center;
-  gap: 18px;
-  padding: clamp(44px, 9vh, 86px) 0 30px;
+  gap: 0;
+  padding: 0;
   text-align: center;
   animation: fade-up 480ms ease;
 }
 
 .workspace-canvas.is-home .home-stage {
   display: flex;
-  gap: 16px;
-  padding: 0;
-}
-
-.home-kicker {
-  margin: 0;
-  color: var(--accent);
-  font-size: 0.84rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
 }
 
 .home-stage h1 {
   margin: 0;
-  font-size: clamp(3rem, 8vw, 5.2rem);
-  line-height: 0.96;
+  max-width: 12ch;
+  font-size: clamp(3rem, 6.8vw, 5rem);
+  line-height: 1;
   letter-spacing: -0.05em;
-}
-
-.home-subtitle {
-  margin: 0;
-  color: var(--muted);
-  font-size: clamp(1rem, 2vw, 1.18rem);
-}
-
-.shortcut-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-}
-
-.shortcut {
-  min-height: 42px;
-  padding: 0 15px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.68);
-  box-shadow: inset 0 0 0 1px rgba(29, 31, 27, 0.08);
-  color: #353a33;
 }
 
 .thread-shell {
@@ -794,7 +754,7 @@ body.has-thread .sidebar {
   }
 
   .icon-button-mobile,
-  body.has-thread #openSidebar {
+  #openSidebar {
     display: inline-flex;
   }
 
