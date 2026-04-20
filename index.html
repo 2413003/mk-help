@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>mk help</title>
+    <meta
+      name="description"
+      content="mk help is human help by chat, call, and in-person meetups in Milton Keynes."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-inner">
+          <div class="sidebar-top">
+            <div class="sidebar-row">
+              <a class="brand" href="#" id="brandHome" aria-label="mk help home">
+                <span class="brand-mark">mk</span>
+                <span class="brand-copy">
+                  <strong>mk help</strong>
+                  <span>human help</span>
+                </span>
+              </a>
+              <button
+                class="icon-button icon-button-mobile"
+                id="closeSidebar"
+                type="button"
+                aria-label="Close menu"
+              >
+                <span></span>
+                <span></span>
+              </button>
+            </div>
+
+            <button class="new-chat" id="newChat" type="button">
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <path
+                  d="M10 4.5v11M4.5 10h11"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-width="1.7"
+                />
+              </svg>
+              <span>New chat</span>
+            </button>
+
+            <nav class="sidebar-nav" aria-label="Primary">
+              <button class="nav-item" id="searchAction" type="button">
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <circle
+                    cx="9"
+                    cy="9"
+                    r="5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                  />
+                  <path
+                    d="M13 13l3.2 3.2"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-width="1.6"
+                  />
+                </svg>
+                <span>Search</span>
+              </button>
+              <button class="nav-item" data-quick-mode="call" type="button">
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <path
+                    d="M6.7 3.8h2.2l.9 3-1.5 1.5a11 11 0 0 0 3.4 3.4l1.5-1.5 3 .9v2.2a1.4 1.4 0 0 1-1.6 1.4A12.9 12.9 0 0 1 5.3 5.4 1.4 1.4 0 0 1 6.7 3.8Z"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-linejoin="round"
+                    stroke-width="1.4"
+                  />
+                </svg>
+                <span>Calls</span>
+              </button>
+              <button class="nav-item" data-quick-mode="meet" type="button">
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <path
+                    d="M10 16.2s5-4.7 5-8.4A5 5 0 0 0 5 7.8c0 3.7 5 8.4 5 8.4Z"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-linejoin="round"
+                    stroke-width="1.4"
+                  />
+                  <circle
+                    cx="10"
+                    cy="7.8"
+                    r="1.7"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                  />
+                </svg>
+                <span>Meetups</span>
+              </button>
+            </nav>
+          </div>
+
+          <div class="recent-wrap">
+            <p class="label">Recent</p>
+            <div class="recent-list">
+              <button class="recent-item" data-seed="I need help with a housing form.">
+                Housing form
+              </button>
+              <button class="recent-item" data-seed="Can someone help me write a job reply?">
+                Job reply
+              </button>
+              <button class="recent-item" data-seed="My phone is not working properly.">
+                Phone issue
+              </button>
+              <button class="recent-item" data-seed="I want to talk this through with someone.">
+                Talk it through
+              </button>
+            </div>
+          </div>
+
+          <div class="sidebar-footer">
+            <div class="presence" aria-label="People online now">
+              <span class="presence-dot"></span>
+              <span>People online</span>
+            </div>
+            <button class="ghost-button full-width" type="button">Log in</button>
+          </div>
+        </div>
+      </aside>
+
+      <button class="sidebar-backdrop" id="sidebarBackdrop" type="button" aria-hidden="true"></button>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button class="icon-button" id="openSidebar" type="button" aria-label="Open menu">
+              <span></span>
+              <span></span>
+            </button>
+            <div class="workspace-meta">
+              <p>mk help</p>
+              <span>chat, call, meet in Milton Keynes</span>
+            </div>
+          </div>
+          <div class="topbar-actions">
+            <button class="ghost-button" type="button">Log in</button>
+            <button class="primary-button" id="startAction" type="button">Start</button>
+          </div>
+        </header>
+
+        <section class="workspace-canvas is-home" id="workspaceCanvas">
+          <div class="home-stage" id="homeStage">
+            <p class="home-kicker">No bots</p>
+            <h1>Real help.</h1>
+            <p class="home-subtitle">Chat. Call. Meet in MK.</p>
+
+            <div class="shortcut-row" aria-label="Quick topics">
+              <button class="shortcut" data-seed="I need help with a form." type="button">
+                Forms
+              </button>
+              <button class="shortcut" data-seed="I need help finding work." type="button">
+                Work
+              </button>
+              <button class="shortcut" data-seed="I need help with my phone or laptop." type="button">
+                Tech
+              </button>
+              <button class="shortcut" data-seed="I just need someone to talk to." type="button">
+                Life
+              </button>
+            </div>
+          </div>
+
+          <div class="thread-shell" id="threadShell" aria-live="polite">
+            <div class="thread-head">
+              <div>
+                <p class="label">Now chatting</p>
+                <h2 id="threadTitle">mk help</h2>
+              </div>
+              <div class="thread-status">
+                <span class="presence-dot"></span>
+                <span>Person replying</span>
+              </div>
+            </div>
+            <div class="conversation" id="conversation"></div>
+          </div>
+
+          <div class="service-strip" aria-label="Ways to get help">
+            <button class="service-link active" data-mode="chat" type="button">
+              <span>Chat</span>
+              <small>fast</small>
+            </button>
+            <button class="service-link" data-mode="call" type="button">
+              <span>Call</span>
+              <small>voice</small>
+            </button>
+            <button class="service-link" data-mode="meet" type="button">
+              <span>Meet in MK</span>
+              <small>in person</small>
+            </button>
+          </div>
+
+          <form class="composer" id="composer">
+            <button class="composer-attach" type="button" aria-label="More options">+</button>
+
+            <label class="composer-input">
+              <span class="sr-only">Ask for help</span>
+              <textarea
+                id="messageInput"
+                rows="1"
+                placeholder="Ask anything"
+                autocomplete="off"
+              ></textarea>
+            </label>
+
+            <div class="composer-controls">
+              <div class="mode-pills" role="tablist" aria-label="Help mode">
+                <button class="mode-pill active" data-mode="chat" type="button">Chat</button>
+                <button class="mode-pill" data-mode="call" type="button">Call</button>
+                <button class="mode-pill" data-mode="meet" type="button">Meet</button>
+              </div>
+              <button class="send-button" type="submit" aria-label="Send message">
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <path
+                    d="M4 10h10.5M10 4l4.5 6-4.5 6"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.7"
+                  />
+                </svg>
+              </button>
+            </div>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
