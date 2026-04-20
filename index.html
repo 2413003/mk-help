@@ -19,7 +19,7 @@
       href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20" />
+    <link rel="stylesheet" href="./styles.css?v=21" />
   </head>
   <body>
     <div class="app-shell">
@@ -148,10 +148,6 @@
           </div>
 
           <div class="sidebar-footer">
-            <div class="presence" aria-label="People online now">
-              <span class="presence-dot"></span>
-              <span>People online</span>
-            </div>
             <button class="ghost-button full-width" id="sidebarLoginAction" type="button">
               Log in
             </button>
@@ -415,21 +411,6 @@
             </div>
           </section>
 
-          <div class="service-strip" aria-label="Ways to get help">
-            <button class="service-link active" data-mode="chat" type="button">
-              <span>Chat</span>
-              <small>fast</small>
-            </button>
-            <button class="service-link" data-mode="call" type="button">
-              <span>Call</span>
-              <small>voice</small>
-            </button>
-            <button class="service-link" data-mode="meet" type="button">
-              <span>Meet in MK</span>
-              <small>in person</small>
-            </button>
-          </div>
-
           <form class="composer" id="composer">
             <div class="composer-attach-wrap">
               <button
@@ -461,11 +442,6 @@
             <div class="attachment-strip" id="attachmentStrip" hidden></div>
 
             <div class="composer-controls">
-              <div class="mode-pills" role="tablist" aria-label="Help mode">
-                <button class="mode-pill active" data-mode="chat" type="button">Chat</button>
-                <button class="mode-pill" data-mode="call" type="button">Call</button>
-                <button class="mode-pill" data-mode="meet" type="button">Meet</button>
-              </div>
               <button class="send-button" type="submit" aria-label="Send message">
                 <svg viewBox="0 0 20 20" aria-hidden="true">
                   <path
@@ -567,6 +543,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./config.js?v=3"></script>
-    <script src="./script.js?v=20"></script>
+    <script src="./script.js?v=21"></script>
   </body>
 </html>
