@@ -1,5 +1,6 @@
 const body = document.body;
 const workspaceCanvas = document.getElementById("workspaceCanvas");
+const homeGreeting = document.getElementById("homeGreeting");
 const openSidebarButton = document.getElementById("openSidebar");
 const closeSidebarButton = document.getElementById("closeSidebar");
 const sidebarBackdrop = document.getElementById("sidebarBackdrop");
@@ -126,6 +127,30 @@ function getDisplayName(user) {
   return user.email.split("@")[0];
 }
 
+function getFirstName(user) {
+  const displayName = getDisplayName(user);
+  return displayName.split(/\s+/)[0];
+}
+
+function getDayGreeting() {
+  const hour = new Date().getHours();
+
+  if (hour < 12) {
+    return "Good morning";
+  }
+
+  if (hour < 18) {
+    return "Good afternoon";
+  }
+
+  return "Good evening";
+}
+
+function updateHomeGreeting() {
+  const greeting = getDayGreeting();
+  homeGreeting.textContent = session ? `${greeting}, ${getFirstName(session)}` : greeting;
+}
+
 function setSidebar(open) {
   body.classList.toggle("sidebar-open", open);
 }
@@ -231,6 +256,7 @@ function updateAuthUI() {
   topAccountPill.hidden = !isAuthed;
   sidebarLoginAction.hidden = isAuthed;
   sidebarSessionCard.hidden = !isAuthed;
+  updateHomeGreeting();
 
   if (!isAuthed) {
     return;
@@ -683,6 +709,7 @@ window.addEventListener("resize", () => {
 });
 
 updateAuthUI();
+updateHomeGreeting();
 autoResizeTextarea();
 applySidebarPreference();
 resetChat();

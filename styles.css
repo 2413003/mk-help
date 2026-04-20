@@ -190,6 +190,11 @@ a {
   box-shadow: inset 0 0 0 1px rgba(29, 31, 27, 0.08);
 }
 
+.icon-button-toggle svg {
+  width: 15px;
+  height: 15px;
+}
+
 .icon-button-toggle:hover {
   background: rgba(255, 255, 255, 0.96);
 }
@@ -477,10 +482,10 @@ a {
 
 .home-stage h1 {
   margin: 0;
-  max-width: 10ch;
+  max-width: 14ch;
   font-size: clamp(2.35rem, 4.9vw, 3.95rem);
   font-weight: 600;
-  line-height: 1;
+  line-height: 1.04;
   letter-spacing: -0.045em;
 }
 
