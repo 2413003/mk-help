@@ -66,15 +66,24 @@ a {
   position: relative;
   display: grid;
   min-height: 100vh;
-  grid-template-columns: 292px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .sidebar {
+  display: none;
   position: relative;
   z-index: 30;
   border-right: 1px solid var(--line);
   background: var(--sidebar);
   background: color-mix(in srgb, var(--sidebar) 92%, white 8%);
+}
+
+body.has-thread .app-shell {
+  grid-template-columns: 292px minmax(0, 1fr);
+}
+
+body.has-thread .sidebar {
+  display: block;
 }
 
 .sidebar-inner {
@@ -346,7 +355,7 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 24px 28px 18px;
+  padding: 18px 28px 12px;
 }
 
 .topbar-left {
@@ -382,6 +391,13 @@ a {
   padding: 10px 24px 24px;
 }
 
+.workspace-canvas.is-home {
+  justify-content: center;
+  gap: 20px;
+  padding-top: 24px;
+  padding-bottom: 48px;
+}
+
 .home-stage,
 .thread-shell {
   width: min(860px, 100%);
@@ -401,6 +417,8 @@ a {
 
 .workspace-canvas.is-home .home-stage {
   display: flex;
+  gap: 16px;
+  padding: 0;
 }
 
 .home-kicker {
@@ -414,7 +432,7 @@ a {
 
 .home-stage h1 {
   margin: 0;
-  font-size: clamp(3rem, 8vw, 5.8rem);
+  font-size: clamp(3rem, 8vw, 5.2rem);
   line-height: 0.96;
   letter-spacing: -0.05em;
 }
@@ -618,8 +636,24 @@ a {
 }
 
 .workspace-canvas.is-home .composer {
-  transform: translateY(-6vh);
+  width: min(760px, 100%);
+  margin-top: 0;
+  gap: 12px;
+  padding: 14px 14px 12px;
+  transform: none;
   animation: fade-up 560ms ease;
+}
+
+.workspace-canvas.is-home .service-strip {
+  display: none;
+}
+
+.workspace-canvas.is-home .composer textarea {
+  min-height: 32px;
+}
+
+.workspace-canvas.is-home .composer-controls {
+  gap: 12px;
 }
 
 .composer-attach {
@@ -708,6 +742,10 @@ a {
   bottom: 12px;
 }
 
+#openSidebar {
+  display: none;
+}
+
 .sidebar-open .sidebar {
   transform: translateX(0);
 }
@@ -756,7 +794,7 @@ a {
   }
 
   .icon-button-mobile,
-  #openSidebar {
+  body.has-thread #openSidebar {
     display: inline-flex;
   }
 
@@ -782,9 +820,15 @@ a {
     padding: 4px 12px 14px;
   }
 
+  .workspace-canvas.is-home {
+    gap: 16px;
+    padding-top: 12px;
+    padding-bottom: 28px;
+  }
+
   .home-stage {
     gap: 14px;
-    padding-top: clamp(38px, 13vh, 86px);
+    padding-top: 0;
   }
 
   .thread-head {
