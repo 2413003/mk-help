@@ -16,7 +16,11 @@ const threadTitle = document.getElementById("threadTitle");
 const recentList = document.getElementById("recentList");
 const newChatButton = document.getElementById("newChat");
 const searchAction = document.getElementById("searchAction");
+const groupsAction = document.getElementById("groupsAction");
+const feedAction = document.getElementById("feedAction");
 const settingsAction = document.getElementById("settingsAction");
+const helperAction = document.getElementById("helperAction");
+const adminAction = document.getElementById("adminAction");
 const brandHome = document.getElementById("brandHome");
 const topLoginAction = document.getElementById("topLoginAction");
 const topAccountPill = document.getElementById("topAccountPill");
@@ -73,6 +77,37 @@ const billingStatus = document.getElementById("billingStatus");
 const requestList = document.getElementById("requestList");
 const settingsAccountHint = document.getElementById("settingsAccountHint");
 const settingsAccountCard = document.getElementById("settingsAccountCard");
+const helperShell = document.getElementById("helperShell");
+const helperMetricGrid = document.getElementById("helperMetricGrid");
+const helperConversationQueue = document.getElementById("helperConversationQueue");
+const helperBookingQueue = document.getElementById("helperBookingQueue");
+const adminShell = document.getElementById("adminShell");
+const adminMetricGrid = document.getElementById("adminMetricGrid");
+const adminUserList = document.getElementById("adminUserList");
+const adminConversationList = document.getElementById("adminConversationList");
+const adminBookingList = document.getElementById("adminBookingList");
+const adminInviteForm = document.getElementById("adminInviteForm");
+const adminInviteEmail = document.getElementById("adminInviteEmail");
+const adminInviteStatus = document.getElementById("adminInviteStatus");
+const adminInviteList = document.getElementById("adminInviteList");
+const groupsShell = document.getElementById("groupsShell");
+const createGroupAction = document.getElementById("createGroupAction");
+const groupList = document.getElementById("groupList");
+const activeGroupTopic = document.getElementById("activeGroupTopic");
+const activeGroupTitle = document.getElementById("activeGroupTitle");
+const activeGroupDescription = document.getElementById("activeGroupDescription");
+const groupJoinAction = document.getElementById("groupJoinAction");
+const groupMessagesElement = document.getElementById("groupMessages");
+const groupComposer = document.getElementById("groupComposer");
+const groupMessageInput = document.getElementById("groupMessageInput");
+const groupStatus = document.getElementById("groupStatus");
+const feedShell = document.getElementById("feedShell");
+const feedComposer = document.getElementById("feedComposer");
+const feedPostTopic = document.getElementById("feedPostTopic");
+const feedPostTitle = document.getElementById("feedPostTitle");
+const feedPostBody = document.getElementById("feedPostBody");
+const feedComposerStatus = document.getElementById("feedComposerStatus");
+const feedList = document.getElementById("feedList");
 
 const STORAGE_KEYS = {
   sidebarCollapsed: "mk-help-sidebar-collapsed",
@@ -180,6 +215,12 @@ const DB = {
   conversations: "mk_help_conversations",
   messages: "mk_help_messages",
   bookingRequests: "mk_help_booking_requests",
+  helperInvites: "mk_help_helper_invites",
+  groups: "mk_help_groups",
+  groupMembers: "mk_help_group_members",
+  groupMessages: "mk_help_group_messages",
+  helpPosts: "mk_help_help_posts",
+  postComments: "mk_help_help_post_comments",
 };
 
 function hasRealConfigValue(value) {
@@ -215,9 +256,22 @@ let currentProfile = null;
 let currentSubscription = null;
 let bookingRequests = [];
 let conversations = [];
+let staffConversations = [];
+let staffBookingRequests = [];
+let adminProfiles = [];
+let adminSubscriptions = [];
+let adminInvites = [];
+let groups = [];
+let groupMemberships = [];
+let groupMessages = [];
+let feedPosts = [];
+let feedCommentsByPost = {};
 let activeConversationId = null;
+let activeGroupId = null;
 let conversationsChannel = null;
 let messagesChannel = null;
+let groupMessagesChannel = null;
+let feedChannel = null;
 let pendingSchedulerSubmit = false;
 let schedulerFeedback = { message: "", tone: "" };
 let billingFeedback = { message: "", tone: "" };
@@ -290,6 +344,28 @@ function getCurrentFirstName() {
   }
 
   return getCurrentDisplayName().split(/\s+/)[0];
+}
+
+function getCurrentRole() {
+  const role = currentProfile?.role;
+
+  if (role === "admin" || role === "helper") {
+    return role;
+  }
+
+  return "user";
+}
+
+function currentUserIsHelper() {
+  return getCurrentRole() === "helper";
+}
+
+function currentUserIsAdmin() {
+  return getCurrentRole() === "admin";
+}
+
+function currentUserIsStaff() {
+  return currentUserIsHelper() || currentUserIsAdmin();
 }
 
 function getDayGreeting() {
@@ -370,7 +446,16 @@ function toggleSidebar() {
 
 function setView(view) {
   activeView = view;
-  workspaceCanvas.classList.remove("is-home", "is-chat", "is-scheduler", "is-settings");
+  workspaceCanvas.classList.remove(
+    "is-home",
+    "is-chat",
+    "is-scheduler",
+    "is-settings",
+    "is-helper",
+    "is-admin",
+    "is-groups",
+    "is-feed",
+  );
   workspaceCanvas.classList.add(`is-${view}`);
 }
 
@@ -586,14 +671,20 @@ function closeAuth() {
 
 function updateAuthUI() {
   const isAuthed = Boolean(currentUser);
+  const isHelper = isAuthed && currentUserIsStaff();
+  const isAdmin = isAuthed && currentUserIsAdmin();
 
   topLoginAction.hidden = isAuthed;
   topAccountPill.hidden = !isAuthed;
   sidebarLoginAction.hidden = isAuthed;
   sidebarSessionCard.hidden = !isAuthed;
+  helperAction.hidden = !isHelper;
+  adminAction.hidden = !isAdmin;
   updateHomeGreeting();
 
   if (!isAuthed) {
+    helperAction.hidden = true;
+    adminAction.hidden = true;
     return;
   }
 
@@ -816,7 +907,20 @@ function deriveConversationTitle(message, mode) {
 }
 
 function getConversationRecord(conversationId) {
-  return conversations.find((item) => item.id === conversationId) || null;
+  return (
+    conversations.find((item) => item.id === conversationId) ||
+    staffConversations.find((item) => item.id === conversationId) ||
+    null
+  );
+}
+
+function isStaffConversation(record = getConversationRecord(activeConversationId)) {
+  return Boolean(
+    currentUser &&
+      currentUserIsStaff() &&
+      record?.user_id &&
+      record.user_id !== currentUser.id,
+  );
 }
 
 function getDayType(date) {
@@ -1212,6 +1316,72 @@ function openSettings() {
   }
 }
 
+async function openGroups() {
+  if (!currentUser) {
+    openAuth("login", "Log in to join groups.");
+    return;
+  }
+
+  setView("groups");
+  await loadGroups();
+
+  if (window.innerWidth <= SIDEBAR_BREAKPOINT) {
+    setSidebar(false);
+  }
+}
+
+async function openFeed() {
+  if (!currentUser) {
+    openAuth("login", "Log in to read the feed.");
+    return;
+  }
+
+  setView("feed");
+  await loadFeedPosts();
+
+  if (window.innerWidth <= SIDEBAR_BREAKPOINT) {
+    setSidebar(false);
+  }
+}
+
+async function openHelperDashboard() {
+  if (!currentUser) {
+    openAuth("login", "Log in with a helper account.");
+    return;
+  }
+
+  if (!currentUserIsStaff()) {
+    showHome();
+    return;
+  }
+
+  setView("helper");
+  await loadStaffWork();
+
+  if (window.innerWidth <= SIDEBAR_BREAKPOINT) {
+    setSidebar(false);
+  }
+}
+
+async function openAdminDashboard() {
+  if (!currentUser) {
+    openAuth("login", "Log in with an admin account.");
+    return;
+  }
+
+  if (!currentUserIsAdmin()) {
+    showHome();
+    return;
+  }
+
+  setView("admin");
+  await loadAdminWork();
+
+  if (window.innerWidth <= SIDEBAR_BREAKPOINT) {
+    setSidebar(false);
+  }
+}
+
 async function loadProfile() {
   if (!supabaseClient || !currentUser) {
     currentProfile = null;
@@ -1253,28 +1423,7 @@ async function loadSubscription() {
 
   if (data) {
     currentSubscription = data;
-    return;
   }
-
-  const defaultRow = {
-    user_id: currentUser.id,
-    plan_code: "free",
-    status: "active",
-    billing_email: currentUser.email || "",
-  };
-
-  const { data: inserted, error: insertError } = await supabaseClient
-    .from(DB.subscriptions)
-    .upsert(defaultRow)
-    .select("user_id, plan_code, status, billing_email, current_period_end, cancel_at_period_end")
-    .maybeSingle();
-
-  if (insertError) {
-    console.error(insertError);
-    return;
-  }
-
-  currentSubscription = inserted || defaultRow;
 }
 
 async function loadBookingRequests() {
@@ -1313,7 +1462,7 @@ async function loadConversations() {
 
   const { data, error } = await supabaseClient
     .from(DB.conversations)
-    .select("id, title, mode, last_message_preview, updated_at, created_at")
+    .select("id, user_id, assigned_helper_id, title, mode, status, last_message_preview, updated_at, created_at")
     .eq("user_id", currentUser.id)
     .order("updated_at", { ascending: false });
 
@@ -1337,6 +1486,690 @@ async function loadConversations() {
 
   renderRecentList();
   renderSettings();
+}
+
+function renderMetricGrid(container, metrics) {
+  container.innerHTML = metrics
+    .map(
+      (item) => `
+        <article class="usage-item">
+          <div class="usage-label">${escapeHtml(item.label)}</div>
+          <div class="usage-value">${escapeHtml(item.value)}</div>
+          <div class="usage-foot">${escapeHtml(item.foot)}</div>
+        </article>
+      `,
+    )
+    .join("");
+}
+
+function setGroupStatus(message = "", tone = "") {
+  groupStatus.textContent = message;
+  groupStatus.hidden = !message;
+  groupStatus.classList.toggle("is-error", tone === "error");
+}
+
+function setFeedComposerStatus(message = "", tone = "") {
+  feedComposerStatus.textContent = message;
+  feedComposerStatus.hidden = !message;
+  feedComposerStatus.classList.toggle("is-error", tone === "error");
+}
+
+function getActiveGroup() {
+  return groups.find((group) => group.id === activeGroupId) || null;
+}
+
+function currentUserIsGroupMember(groupId) {
+  return currentUserIsStaff() || groupMemberships.some((membership) => membership.group_id === groupId);
+}
+
+function renderGroups() {
+  createGroupAction.hidden = !currentUserIsStaff();
+
+  groupList.innerHTML =
+    groups.length > 0
+      ? groups
+          .map(
+            (group) => `
+              <article class="request-item${group.id === activeGroupId ? " is-active" : ""}">
+                <div class="request-item-top">
+                  <div>
+                    <h4>${escapeHtml(group.title)}</h4>
+                    <p>${escapeHtml(group.description || "Group help space.")}</p>
+                  </div>
+                  <span class="plan-pill">${escapeHtml(group.topic || "General")}</span>
+                </div>
+                <div class="staff-actions">
+                  <button class="ghost-button" type="button" data-group-id="${escapeHtml(group.id)}">
+                    Open
+                  </button>
+                </div>
+              </article>
+            `,
+          )
+          .join("")
+      : `<p class="empty-state">No groups yet.</p>`;
+
+  const activeGroup = getActiveGroup();
+  if (!activeGroup) {
+    activeGroupTopic.textContent = "Group";
+    activeGroupTitle.textContent = "Choose a group";
+    activeGroupDescription.textContent = "Join a topic space to start.";
+    groupJoinAction.hidden = true;
+    groupComposer.hidden = true;
+    groupMessagesElement.innerHTML = `<p class="empty-state">No group selected.</p>`;
+    return;
+  }
+
+  const isMember = currentUserIsGroupMember(activeGroup.id);
+  activeGroupTopic.textContent = activeGroup.topic || "Group";
+  activeGroupTitle.textContent = activeGroup.title;
+  activeGroupDescription.textContent = activeGroup.description || "Group help space.";
+  groupJoinAction.hidden = isMember;
+  groupComposer.hidden = !isMember;
+
+  renderGroupMessages();
+}
+
+function renderGroupMessages() {
+  const activeGroup = getActiveGroup();
+  if (!activeGroup) {
+    groupMessagesElement.innerHTML = `<p class="empty-state">No group selected.</p>`;
+    return;
+  }
+
+  if (!currentUserIsGroupMember(activeGroup.id)) {
+    groupMessagesElement.innerHTML = `<p class="empty-state">Join this group to read and reply.</p>`;
+    return;
+  }
+
+  groupMessagesElement.innerHTML =
+    groupMessages.length > 0
+      ? groupMessages
+          .map((message) => {
+            const isMine = message.sender_id === currentUser?.id;
+
+            return `
+              <article class="social-message${isMine ? " is-mine" : ""}">
+                <div class="message-meta">${escapeHtml(isMine ? "you" : message.sender_name || "member")}</div>
+                <div class="social-message-body">${escapeHtml(message.body)}</div>
+              </article>
+            `;
+          })
+          .join("")
+      : `<p class="empty-state">No messages yet.</p>`;
+
+  groupMessagesElement.scrollTop = groupMessagesElement.scrollHeight;
+}
+
+async function loadGroupMessages(groupId = activeGroupId) {
+  groupMessages = [];
+
+  if (!supabaseClient || !currentUser || !groupId || !currentUserIsGroupMember(groupId)) {
+    renderGroups();
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from(DB.groupMessages)
+    .select("id, group_id, sender_id, sender_name, role, body, created_at")
+    .eq("group_id", groupId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error(error);
+    setGroupStatus(getFriendlyErrorMessage(error), "error");
+    renderGroups();
+    return;
+  }
+
+  groupMessages = data || [];
+  setGroupStatus();
+  renderGroups();
+}
+
+async function loadGroups() {
+  groups = [];
+  groupMemberships = [];
+  groupMessages = [];
+
+  if (!supabaseClient || !currentUser) {
+    renderGroups();
+    return;
+  }
+
+  const [{ data: groupRows, error: groupError }, { data: membershipRows, error: membershipError }] =
+    await Promise.all([
+      supabaseClient
+        .from(DB.groups)
+        .select("id, title, description, topic, visibility, status, created_at, updated_at")
+        .order("updated_at", { ascending: false }),
+      supabaseClient
+        .from(DB.groupMembers)
+        .select("group_id, user_id, role, created_at")
+        .eq("user_id", currentUser.id),
+    ]);
+
+  if (groupError) {
+    console.error(groupError);
+    setGroupStatus(getFriendlyErrorMessage(groupError), "error");
+  }
+
+  if (membershipError) {
+    console.error(membershipError);
+  }
+
+  groups = groupRows || [];
+  groupMemberships = membershipRows || [];
+
+  if (!activeGroupId || !groups.some((group) => group.id === activeGroupId)) {
+    activeGroupId = groups[0]?.id || null;
+  }
+
+  if (activeGroupId && currentUserIsGroupMember(activeGroupId)) {
+    await loadGroupMessages(activeGroupId);
+    return;
+  }
+
+  renderGroups();
+}
+
+async function joinActiveGroup() {
+  const activeGroup = getActiveGroup();
+  if (!activeGroup) {
+    return;
+  }
+
+  if (!currentUser) {
+    openAuth("login", "Log in to join groups.");
+    return;
+  }
+
+  const { error } = await supabaseClient.from(DB.groupMembers).insert({
+    group_id: activeGroup.id,
+    user_id: currentUser.id,
+    role: "member",
+  });
+
+  if (error && !/duplicate key/i.test(error.message || "")) {
+    console.error(error);
+    setGroupStatus(getFriendlyErrorMessage(error), "error");
+    return;
+  }
+
+  await loadGroups();
+}
+
+async function createGroupFromPrompt() {
+  if (!currentUserIsStaff()) {
+    return;
+  }
+
+  const title = window.prompt("Group name");
+  if (!title?.trim()) {
+    return;
+  }
+
+  const topic = window.prompt("Topic", "General") || "General";
+  const { data, error } = await supabaseClient
+    .from(DB.groups)
+    .insert({
+      title: title.trim(),
+      description: "Group help space.",
+      topic: topic.trim() || "General",
+      created_by: currentUser.id,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error(error);
+    setGroupStatus(getFriendlyErrorMessage(error), "error");
+    return;
+  }
+
+  activeGroupId = data.id;
+  await loadGroups();
+}
+
+async function submitGroupMessage() {
+  const activeGroup = getActiveGroup();
+  const bodyValue = groupMessageInput.value.trim();
+
+  if (!activeGroup || !bodyValue) {
+    return;
+  }
+
+  if (!currentUserIsGroupMember(activeGroup.id)) {
+    setGroupStatus("Join this group first.", "error");
+    return;
+  }
+
+  const role = getCurrentRole();
+  const { error } = await supabaseClient.from(DB.groupMessages).insert({
+    group_id: activeGroup.id,
+    sender_id: currentUser.id,
+    sender_name: getCurrentDisplayName(),
+    role,
+    body: bodyValue,
+  });
+
+  if (error) {
+    console.error(error);
+    setGroupStatus(getFriendlyErrorMessage(error), "error");
+    return;
+  }
+
+  groupMessageInput.value = "";
+  await loadGroupMessages(activeGroup.id);
+}
+
+function renderFeed() {
+  feedComposer.hidden = !currentUserIsStaff();
+
+  feedList.innerHTML =
+    feedPosts.length > 0
+      ? feedPosts
+          .map((post) => {
+            const comments = feedCommentsByPost[post.id] || [];
+
+            return `
+              <article class="feed-card">
+                <div>
+                  <div class="feed-card-meta">
+                    ${escapeHtml(post.topic || "Help")} · ${escapeHtml(post.author_name || "mk help")} · ${escapeHtml(
+                      formatRequestTimestamp(post.created_at),
+                    )}
+                  </div>
+                  <h3>${escapeHtml(post.title)}</h3>
+                  <p class="feed-card-body">${escapeHtml(post.body)}</p>
+                </div>
+                <div class="feed-comments">
+                  ${comments
+                    .map(
+                      (comment) => `
+                        <div class="feed-comment">
+                          <div class="feed-comment-meta">${escapeHtml(comment.user_name || "member")}</div>
+                          <p>${escapeHtml(comment.body)}</p>
+                        </div>
+                      `,
+                    )
+                    .join("")}
+                </div>
+                <form class="feed-comment-form" data-post-comment-form="${escapeHtml(post.id)}">
+                  <input type="text" placeholder="Add a reply" />
+                  <button class="ghost-button" type="submit">Reply</button>
+                </form>
+              </article>
+            `;
+          })
+          .join("")
+      : `<p class="empty-state">No posts yet.</p>`;
+}
+
+async function loadFeedPosts() {
+  feedPosts = [];
+  feedCommentsByPost = {};
+
+  if (!supabaseClient || !currentUser) {
+    renderFeed();
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from(DB.helpPosts)
+    .select("id, author_id, author_name, topic, title, body, status, created_at, updated_at")
+    .order("updated_at", { ascending: false })
+    .limit(40);
+
+  if (error) {
+    console.error(error);
+    renderFeed();
+    return;
+  }
+
+  feedPosts = data || [];
+  const postIds = feedPosts.map((post) => post.id);
+
+  if (postIds.length > 0) {
+    const { data: comments, error: commentsError } = await supabaseClient
+      .from(DB.postComments)
+      .select("id, post_id, user_id, user_name, body, created_at")
+      .in("post_id", postIds)
+      .order("created_at", { ascending: true });
+
+    if (commentsError) {
+      console.error(commentsError);
+    } else {
+      feedCommentsByPost = (comments || []).reduce((next, comment) => {
+        next[comment.post_id] = next[comment.post_id] || [];
+        next[comment.post_id].push(comment);
+        return next;
+      }, {});
+    }
+  }
+
+  renderFeed();
+}
+
+async function submitFeedPost() {
+  const title = feedPostTitle.value.trim();
+  const bodyValue = feedPostBody.value.trim();
+  const topic = feedPostTopic.value.trim() || "General";
+
+  if (!currentUserIsStaff()) {
+    return;
+  }
+
+  if (!title || !bodyValue) {
+    setFeedComposerStatus("Add a title and post.", "error");
+    return;
+  }
+
+  const { error } = await supabaseClient.from(DB.helpPosts).insert({
+    author_id: currentUser.id,
+    author_name: getCurrentDisplayName(),
+    topic,
+    title,
+    body: bodyValue,
+    status: "published",
+  });
+
+  if (error) {
+    console.error(error);
+    setFeedComposerStatus(getFriendlyErrorMessage(error), "error");
+    return;
+  }
+
+  feedPostTopic.value = "";
+  feedPostTitle.value = "";
+  feedPostBody.value = "";
+  setFeedComposerStatus("Published.");
+  await loadFeedPosts();
+}
+
+async function submitFeedComment(postId, bodyValue) {
+  const body = bodyValue.trim();
+  if (!body || !currentUser) {
+    return;
+  }
+
+  const { error } = await supabaseClient.from(DB.postComments).insert({
+    post_id: postId,
+    user_id: currentUser.id,
+    user_name: getCurrentDisplayName(),
+    body,
+  });
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  await loadFeedPosts();
+}
+
+function getAdminProfile(userId) {
+  return adminProfiles.find((profile) => profile.id === userId) || null;
+}
+
+function getAdminSubscription(userId) {
+  return adminSubscriptions.find((subscription) => subscription.user_id === userId) || null;
+}
+
+function getUserDisplayForStaff(userId) {
+  const profile = getAdminProfile(userId);
+  return profile?.full_name || profile?.email || `User ${String(userId || "").slice(0, 8)}`;
+}
+
+function createConversationQueueMarkup(items, scope = "helper") {
+  if (items.length === 0) {
+    return `<p class="empty-state">No chats waiting.</p>`;
+  }
+
+  return items
+    .slice(0, 12)
+    .map(
+      (item) => `
+        <article class="request-item">
+          <div class="request-item-top">
+            <div>
+              <h4>${escapeHtml(item.title || "Chat")}</h4>
+              <p>${escapeHtml(item.last_message_preview || "No messages yet.")}</p>
+            </div>
+            <span class="plan-pill">${escapeHtml(item.status || "open")}</span>
+          </div>
+          <div class="staff-item-meta">
+            ${escapeHtml(getUserDisplayForStaff(item.user_id))} · ${escapeHtml(formatRequestTimestamp(item.updated_at || item.created_at))}
+          </div>
+          <div class="staff-actions">
+            <button class="ghost-button" type="button" data-${scope}-conversation-id="${escapeHtml(item.id)}">
+              Open
+            </button>
+          </div>
+        </article>
+      `,
+    )
+    .join("");
+}
+
+function createBookingQueueMarkup(items, scope = "helper") {
+  if (items.length === 0) {
+    return `<p class="empty-state">No requests waiting.</p>`;
+  }
+
+  return items
+    .slice(0, 12)
+    .map(
+      (request) => `
+        <article class="request-item">
+          <div class="request-item-top">
+            <div>
+              <h4>${escapeHtml(request.kind === "meet" ? "Meetup" : "Call")}</h4>
+              <p>${escapeHtml(request.topic)} · ${escapeHtml(String(request.duration_minutes))} min</p>
+            </div>
+            <span class="plan-pill">${escapeHtml(request.status || "requested")}</span>
+          </div>
+          <div class="staff-item-meta">
+            ${escapeHtml(getUserDisplayForStaff(request.user_id))} · ${escapeHtml(formatLongDate(request.slot_date))} · ${escapeHtml(
+              request.slot_time,
+            )}
+          </div>
+          <div class="staff-actions">
+            <select class="staff-select" data-${scope}-booking-status="${escapeHtml(request.id)}">
+              ${["requested", "confirmed", "completed", "cancelled"]
+                .map(
+                  (status) =>
+                    `<option value="${status}"${request.status === status ? " selected" : ""}>${status}</option>`,
+                )
+                .join("")}
+            </select>
+          </div>
+        </article>
+      `,
+    )
+    .join("");
+}
+
+function renderHelperDashboard() {
+  const workConversations = staffConversations.filter((item) => item.user_id !== currentUser?.id);
+  const openConversations = workConversations.filter((item) => item.status !== "closed");
+  const requestedBookings = staffBookingRequests.filter((item) => item.status === "requested");
+
+  renderMetricGrid(helperMetricGrid, [
+    { label: "Open chats", value: openConversations.length, foot: "Visible to you" },
+    { label: "Requests", value: requestedBookings.length, foot: "Calls & meets" },
+    {
+      label: "Assigned",
+      value: workConversations.filter((item) => item.assigned_helper_id === currentUser?.id).length,
+      foot: "Your chats",
+    },
+  ]);
+
+  helperConversationQueue.innerHTML = createConversationQueueMarkup(openConversations, "helper");
+  helperBookingQueue.innerHTML = createBookingQueueMarkup(staffBookingRequests, "helper");
+}
+
+function renderAdminDashboard() {
+  renderMetricGrid(adminMetricGrid, [
+    { label: "Users", value: adminProfiles.filter((item) => item.role === "user").length, foot: "Default accounts" },
+    { label: "Helpers", value: adminProfiles.filter((item) => item.role === "helper").length, foot: "Can give help" },
+    { label: "Admins", value: adminProfiles.filter((item) => item.role === "admin").length, foot: "Full access" },
+    { label: "Requests", value: staffBookingRequests.length, foot: "Calls & meets" },
+  ]);
+
+  adminUserList.innerHTML =
+    adminProfiles.length > 0
+      ? adminProfiles
+          .slice(0, 40)
+          .map((profile) => {
+            const subscription = getAdminSubscription(profile.id);
+            const isSelf = profile.id === currentUser?.id;
+
+            return `
+              <article class="admin-user-item">
+                <div class="admin-user-item-top">
+                  <div>
+                    <h4>${escapeHtml(profile.full_name || profile.email || "Account")}</h4>
+                    <p>${escapeHtml(profile.email || "")}</p>
+                  </div>
+                  <span class="plan-pill">${escapeHtml(profile.role || "user")}</span>
+                </div>
+                <div class="admin-user-controls">
+                  <select data-admin-role-user-id="${escapeHtml(profile.id)}"${isSelf ? " disabled" : ""}>
+                    ${["user", "helper", "admin"]
+                      .map(
+                        (role) =>
+                          `<option value="${role}"${profile.role === role ? " selected" : ""}>${role}</option>`,
+                      )
+                      .join("")}
+                  </select>
+                  <select data-admin-plan-user-id="${escapeHtml(profile.id)}">
+                    ${Object.keys(planDefinitions)
+                      .map(
+                        (planCode) =>
+                          `<option value="${planCode}"${
+                            (subscription?.plan_code || "free") === planCode ? " selected" : ""
+                          }>${planDefinitions[planCode].name}</option>`,
+                      )
+                      .join("")}
+                  </select>
+                </div>
+              </article>
+            `;
+          })
+          .join("")
+      : `<p class="empty-state">No accounts visible.</p>`;
+
+  adminConversationList.innerHTML = createConversationQueueMarkup(staffConversations, "admin");
+  adminBookingList.innerHTML = createBookingQueueMarkup(staffBookingRequests, "admin");
+  adminInviteList.innerHTML =
+    adminInvites.length > 0
+      ? adminInvites
+          .slice(0, 8)
+          .map(
+            (invite) => `
+              <article class="request-item">
+                <div class="request-item-top">
+                  <div>
+                    <h4>${escapeHtml(invite.email)}</h4>
+                    <p>${escapeHtml(formatRequestTimestamp(invite.created_at))}</p>
+                  </div>
+                  <span class="plan-pill">${escapeHtml(invite.status)}</span>
+                </div>
+              </article>
+            `,
+          )
+          .join("")
+      : `<p class="empty-state">No helper invites yet.</p>`;
+}
+
+async function loadStaffWork() {
+  staffConversations = [];
+  staffBookingRequests = [];
+
+  if (!supabaseClient || !currentUser || !currentUserIsStaff()) {
+    renderHelperDashboard();
+    return;
+  }
+
+  const [{ data: conversationRows, error: conversationError }, { data: bookingRows, error: bookingError }] =
+    await Promise.all([
+      supabaseClient
+        .from(DB.conversations)
+        .select("id, user_id, assigned_helper_id, title, mode, status, last_message_preview, updated_at, created_at")
+        .order("updated_at", { ascending: false })
+        .limit(60),
+      supabaseClient
+        .from(DB.bookingRequests)
+        .select(
+          "id, user_id, kind, topic, duration_minutes, slot_date, slot_time, contact_channel, area, status, created_at",
+        )
+        .order("created_at", { ascending: false })
+        .limit(60),
+    ]);
+
+  if (conversationError) {
+    console.error(conversationError);
+  }
+
+  if (bookingError) {
+    console.error(bookingError);
+  }
+
+  staffConversations = conversationRows || [];
+  staffBookingRequests = bookingRows || [];
+  renderHelperDashboard();
+}
+
+async function loadAdminWork() {
+  adminProfiles = [];
+  adminSubscriptions = [];
+  adminInvites = [];
+
+  if (!supabaseClient || !currentUser || !currentUserIsAdmin()) {
+    renderAdminDashboard();
+    return;
+  }
+
+  await loadStaffWork();
+
+  const [
+    { data: profileRows, error: profileError },
+    { data: subscriptionRows, error: subscriptionError },
+    { data: inviteRows, error: inviteError },
+  ] = await Promise.all([
+    supabaseClient
+      .from(DB.profiles)
+      .select("id, email, full_name, first_name, role, created_at")
+      .order("created_at", { ascending: false })
+      .limit(100),
+    supabaseClient
+      .from(DB.subscriptions)
+      .select("user_id, plan_code, status, billing_email, current_period_end, cancel_at_period_end")
+      .limit(100),
+    supabaseClient
+      .from(DB.helperInvites)
+      .select("id, email, status, created_at")
+      .order("created_at", { ascending: false })
+      .limit(30),
+  ]);
+
+  if (profileError) {
+    console.error(profileError);
+  }
+
+  if (subscriptionError) {
+    console.error(subscriptionError);
+  }
+
+  if (inviteError) {
+    console.error(inviteError);
+  }
+
+  adminProfiles = profileRows || [];
+  adminSubscriptions = subscriptionRows || [];
+  adminInvites = inviteRows || [];
+  renderAdminDashboard();
 }
 
 async function resolveAttachmentUrls(attachments) {
@@ -1371,12 +2204,19 @@ async function resolveAttachmentUrls(attachments) {
 
 async function renderConversationMessages(rows) {
   conversation.innerHTML = "";
+  const activeRecord = getConversationRecord(activeConversationId);
+  const viewingOwnConversation = !activeRecord?.user_id || activeRecord.user_id === currentUser?.id;
 
   for (const row of rows) {
     const attachments = await resolveAttachmentUrls(row.attachments);
     const messageElement = createMessageElement({
       role: row.role === "user" ? "user" : "helper",
-      label: row.role === "user" ? "you" : row.sender_name || "mk help",
+      label:
+        row.role === "user"
+          ? viewingOwnConversation
+            ? "you"
+            : row.sender_name || "user"
+          : row.sender_name || "mk help",
       text: row.body,
       attachments,
     });
@@ -1538,7 +2378,7 @@ async function createConversation(message, mode) {
   const { data, error } = await supabaseClient
     .from(DB.conversations)
     .insert(payload)
-    .select("id, title, mode, last_message_preview, updated_at, created_at")
+    .select("id, user_id, assigned_helper_id, title, mode, status, last_message_preview, updated_at, created_at")
     .single();
 
   if (error) {
@@ -1560,6 +2400,10 @@ async function ensureConversationForSend(message) {
   }
 
   const record = getConversationRecord(activeConversationId);
+  if (isStaffConversation(record)) {
+    return record;
+  }
+
   if (record?.mode !== activeMode) {
     await updateConversationMode(activeConversationId, activeMode);
   }
@@ -1641,14 +2485,15 @@ async function submitMessage(rawMessage, skipAuth = false, attachmentsOverride =
     }
 
     const uploadedAttachments = await uploadAttachments(attachments, conversationRecord.id);
+    const staffReply = isStaffConversation(conversationRecord);
 
     const { error } = await supabaseClient.from(DB.messages).insert({
       attachments: uploadedAttachments,
       body: message,
       conversation_id: conversationRecord.id,
-      role: "user",
+      role: staffReply ? "helper" : "user",
       sender_id: currentUser.id,
-      sender_name: getCurrentDisplayName(),
+      sender_name: staffReply ? `${getCurrentDisplayName()} from mk help` : getCurrentDisplayName(),
     });
 
     if (error) {
@@ -1659,6 +2504,12 @@ async function submitMessage(rawMessage, skipAuth = false, attachmentsOverride =
     autoResizeTextarea();
     clearPendingAttachments();
     await loadConversations();
+    if (currentUserIsStaff()) {
+      await loadStaffWork();
+    }
+    if (currentUserIsAdmin()) {
+      await loadAdminWork();
+    }
     await openConversation(conversationRecord.id, { closeMenu: false });
   } catch (error) {
     console.error(error);
@@ -1764,6 +2615,17 @@ async function applyAuthSession(nextSession) {
     currentSubscription = getDefaultSubscription();
     bookingRequests = [];
     conversations = [];
+    staffConversations = [];
+    staffBookingRequests = [];
+    adminProfiles = [];
+    adminSubscriptions = [];
+    adminInvites = [];
+    groups = [];
+    groupMemberships = [];
+    groupMessages = [];
+    feedPosts = [];
+    feedCommentsByPost = {};
+    activeGroupId = null;
     pendingSchedulerSubmit = false;
     unsubscribeConversations();
     resetChat();
@@ -1771,6 +2633,10 @@ async function applyAuthSession(nextSession) {
     renderRecentList();
     renderScheduler();
     renderSettings();
+    renderHelperDashboard();
+    renderAdminDashboard();
+    renderGroups();
+    renderFeed();
     return;
   }
 
@@ -1779,10 +2645,39 @@ async function applyAuthSession(nextSession) {
   updateAuthUI();
   await loadBookingRequests();
   await loadConversations();
+  if (activeView === "groups") {
+    await loadGroups();
+  }
+  if (activeView === "feed") {
+    await loadFeedPosts();
+  }
+  if (currentUserIsStaff()) {
+    await loadStaffWork();
+  } else {
+    staffConversations = [];
+    staffBookingRequests = [];
+    renderHelperDashboard();
+  }
+  if (currentUserIsAdmin()) {
+    await loadAdminWork();
+  } else {
+    adminProfiles = [];
+    adminSubscriptions = [];
+    adminInvites = [];
+    renderAdminDashboard();
+  }
   subscribeToConversations();
 
   if (activeConversationId && getConversationRecord(activeConversationId)) {
     await openConversation(activeConversationId, { closeMenu: false });
+  } else if (activeView === "admin" && currentUserIsAdmin()) {
+    await openAdminDashboard();
+  } else if (activeView === "helper" && currentUserIsStaff()) {
+    await openHelperDashboard();
+  } else if (activeView === "groups") {
+    await openGroups();
+  } else if (activeView === "feed") {
+    await openFeed();
   } else if (activeView === "settings") {
     renderSettings();
   } else if (activeView === "scheduler") {
@@ -1914,6 +2809,97 @@ function handlePlanAction(planCode) {
   setBillingStatus(`${plan.name} checkout is the next backend step. The interface is ready.`);
 }
 
+function setAdminInviteStatus(message = "", tone = "") {
+  adminInviteStatus.textContent = message;
+  adminInviteStatus.hidden = !message;
+  adminInviteStatus.classList.toggle("is-error", tone === "error");
+}
+
+async function inviteHelperByEmail(emailValue) {
+  if (!currentUserIsAdmin() || !supabaseClient || !currentUser) {
+    setAdminInviteStatus("Admin access required.", "error");
+    return;
+  }
+
+  const email = normalizeEmail(emailValue);
+  if (!email) {
+    setAdminInviteStatus("Enter an email.", "error");
+    return;
+  }
+
+  const { error } = await supabaseClient.from(DB.helperInvites).insert({
+    email,
+    invited_by: currentUser.id,
+  });
+
+  if (error) {
+    console.error(error);
+    setAdminInviteStatus(getFriendlyErrorMessage(error), "error");
+    return;
+  }
+
+  adminInviteEmail.value = "";
+  setAdminInviteStatus("Helper invite saved.");
+  await loadAdminWork();
+}
+
+async function updateAdminUserRole(userId, role) {
+  if (!currentUserIsAdmin() || userId === currentUser?.id) {
+    return;
+  }
+
+  const { error } = await supabaseClient.from(DB.profiles).update({ role }).eq("id", userId);
+  if (error) {
+    console.error(error);
+    setAdminInviteStatus(getFriendlyErrorMessage(error), "error");
+    return;
+  }
+
+  await loadAdminWork();
+}
+
+async function updateAdminUserPlan(userId, planCode) {
+  if (!currentUserIsAdmin()) {
+    return;
+  }
+
+  const profile = getAdminProfile(userId);
+  const { error } = await supabaseClient.from(DB.subscriptions).upsert({
+    user_id: userId,
+    plan_code: planCode,
+    status: "active",
+    billing_email: profile?.email || "",
+  });
+
+  if (error) {
+    console.error(error);
+    setAdminInviteStatus(getFriendlyErrorMessage(error), "error");
+    return;
+  }
+
+  await loadAdminWork();
+}
+
+async function updateBookingStatus(requestId, status) {
+  if (!currentUserIsStaff()) {
+    return;
+  }
+
+  const { error } = await supabaseClient.from(DB.bookingRequests).update({ status }).eq("id", requestId);
+  if (error) {
+    console.error(error);
+    setComposerStatus(getFriendlyErrorMessage(error), "error");
+    return;
+  }
+
+  if (currentUserIsAdmin()) {
+    await loadAdminWork();
+    return;
+  }
+
+  await loadStaffWork();
+}
+
 composer.addEventListener("submit", (event) => {
   event.preventDefault();
   void submitMessage(messageInput.value);
@@ -2022,6 +3008,18 @@ schedulerSubmit.addEventListener("click", () => {
 });
 
 settingsAction.addEventListener("click", openSettings);
+groupsAction.addEventListener("click", () => {
+  void openGroups();
+});
+feedAction.addEventListener("click", () => {
+  void openFeed();
+});
+helperAction.addEventListener("click", () => {
+  void openHelperDashboard();
+});
+adminAction.addEventListener("click", () => {
+  void openAdminDashboard();
+});
 
 planGrid.addEventListener("click", (event) => {
   const button = event.target.closest("[data-plan-action]");
@@ -2038,6 +3036,105 @@ manageBillingAction.addEventListener("click", () => {
 
 managePaymentAction.addEventListener("click", () => {
   openBillingPortal("Payment methods");
+});
+
+groupList.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-group-id]");
+  if (!button) {
+    return;
+  }
+
+  activeGroupId = button.dataset.groupId;
+  void loadGroupMessages(activeGroupId);
+});
+
+groupJoinAction.addEventListener("click", () => {
+  void joinActiveGroup();
+});
+
+createGroupAction.addEventListener("click", () => {
+  void createGroupFromPrompt();
+});
+
+groupComposer.addEventListener("submit", (event) => {
+  event.preventDefault();
+  void submitGroupMessage();
+});
+
+feedComposer.addEventListener("submit", (event) => {
+  event.preventDefault();
+  void submitFeedPost();
+});
+
+feedList.addEventListener("submit", (event) => {
+  const form = event.target.closest("[data-post-comment-form]");
+  if (!form) {
+    return;
+  }
+
+  event.preventDefault();
+  const input = form.querySelector("input");
+  if (!input) {
+    return;
+  }
+
+  const value = input.value;
+  input.value = "";
+  void submitFeedComment(form.dataset.postCommentForm, value);
+});
+
+helperConversationQueue.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-helper-conversation-id]");
+  if (!button) {
+    return;
+  }
+
+  void openConversation(button.dataset.helperConversationId);
+});
+
+adminConversationList.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-admin-conversation-id]");
+  if (!button) {
+    return;
+  }
+
+  void openConversation(button.dataset.adminConversationId);
+});
+
+helperBookingQueue.addEventListener("change", (event) => {
+  const field = event.target.closest("[data-helper-booking-status]");
+  if (!field) {
+    return;
+  }
+
+  void updateBookingStatus(field.dataset.helperBookingStatus, field.value);
+});
+
+adminBookingList.addEventListener("change", (event) => {
+  const field = event.target.closest("[data-admin-booking-status]");
+  if (!field) {
+    return;
+  }
+
+  void updateBookingStatus(field.dataset.adminBookingStatus, field.value);
+});
+
+adminUserList.addEventListener("change", (event) => {
+  const roleField = event.target.closest("[data-admin-role-user-id]");
+  if (roleField) {
+    void updateAdminUserRole(roleField.dataset.adminRoleUserId, roleField.value);
+    return;
+  }
+
+  const planField = event.target.closest("[data-admin-plan-user-id]");
+  if (planField) {
+    void updateAdminUserPlan(planField.dataset.adminPlanUserId, planField.value);
+  }
+});
+
+adminInviteForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  void inviteHelperByEmail(adminInviteEmail.value);
 });
 
 newChatButton.addEventListener("click", () => {
